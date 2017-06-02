@@ -1,0 +1,9 @@
+[package]
+name = "rudy"
+version = "0.1.0"
+authors = ["Aaron DeVore <aaron.devore@gmail.com>"]
+
+[dependencies]
+nodrop = "*"
+num-traits = "*"
+num = "*"
