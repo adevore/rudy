@@ -1,6 +1,6 @@
 # Rudy
 
-A Judy array implementation in Rust. Judy arrays are highly efficient
+Rudy is a Judy array implementation in Rust. Judy arrays are highly efficient
 word-to-word or word-to-bit maps that adapt well to different data.
 The reference Judy array implementation provides a word to word map (JudyL),
 set of words (Judy1), string to word (JudySL) and fixed length byte
