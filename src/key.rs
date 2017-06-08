@@ -31,7 +31,7 @@ impl_key!(u32, 4);
 impl_key!(u64, 8);
 #[cfg(feature = "i128")]
 impl_key!(u128, 16);
-#[cfg(target_pointer_size = "64")]
-impl_key!(usize, 8);
-#[cfg(target_pointer_size = "32")]
+#[cfg(target_pointer_width = "32")]
 impl_key!(usize, 4);
+#[cfg(target_pointer_width = "64")]
+impl_key!(usize, 8);
