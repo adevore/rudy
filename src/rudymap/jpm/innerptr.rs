@@ -10,12 +10,12 @@ use ::util::util::{partial_write, partial_read};
 use ::Key;
 
 #[cfg(target_pointer_width = "32")]
-struct Population {
+pub struct Population {
     inner: [u8; 3]
 }
 
 #[cfg(target_pointer_width = "64")]
-struct Population {
+pub struct Population {
     inner: [u8; 7]
 }
 
@@ -157,11 +157,12 @@ mod test {
 
     #[test]
     fn test_new() {
-        InnerPtr::empty();
-        InnerPtr::new(Box::new(BranchLinear::new()), 0);
-        InnerPtr::new(Box::new(BranchBitmap::new()), 0);
-        InnerPtr::new(Box::new(BranchUncompressed::new()), 0);
-        InnerPtr::new(Box::new(LeafLinear::new()), 0);
-        InnerPtr::new(Box::new(LeafBitmap::new()), 0);
+        type WordInnerPtr = InnerPtr<usize, usize>;
+        WordInnerPtr::empty();
+        WordInnerPtr::new(Box::new(BranchLinear::new()), 0);
+        WordInnerPtr::new(Box::new(BranchBitmap::new()), 0);
+        WordInnerPtr::new(Box::new(BranchUncompressed::new()), 0);
+        WordInnerPtr::new(Box::new(LeafLinear::new()), 0);
+        WordInnerPtr::new(Box::new(LeafBitmap::new()), 0);
     }
 }

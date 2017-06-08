@@ -1,14 +1,50 @@
+use std::marker::PhantomData;
 use util::locksteparray::{LockstepArray, InsertError};
-use super::jpm::jpm_root::JPM;
+use super::jpm::jpm_root::Jpm;
 use ::Key;
 use ::rudymap::results::InsertResult;
+use std::iter;
+use super::rootptr::RootPtr;
 
-pub trait RootLeaf<K, V> {
-    type OverflowNode: RootLeaf<K, V>;
+pub trait RootLeaf<K: Key, V> {
     fn get(&self, key: K) -> Option<&V>;
     fn insert(&mut self, key: K, value: V) -> InsertResult<V>;
-    fn expand(self, key: K, value: V) -> Self::OverflowNode;
+    fn expand(self: Box<Self>, key: K, value: V) -> RootPtr<K, V>;
     fn len(&self) -> usize;
+}
+
+pub struct Empty<K: Key, V>(PhantomData<(K, V)>);
+
+impl<K: Key, V> Empty<K, V> {
+    pub fn new() -> Empty<K, V> {
+        Empty(PhantomData)
+    }
+}
+
+impl<K: Key, V> RootLeaf<K, V> for Empty<K, V> {
+    fn get(&self, key: K) -> Option<&V> {
+        None
+    }
+
+    fn insert(&mut self, key: K, value: V) -> InsertResult<V> {
+        InsertResult::Resize(value)
+    }
+
+    fn expand(self: Box<Self>, key: K, value: V) -> RootPtr<K, V> {
+        Box::new(Leaf1::new(key, value)).into()
+    }
+
+    fn len(&self) -> usize {
+        0
+    }
+}
+
+impl<'a, K: Key + 'a, V: 'a> IntoIterator for &'a Empty<K, V> {
+    type Item = (K, &'a V);
+    type IntoIter = iter::Empty<Self::Item>;
+    fn into_iter(self) -> Self::IntoIter {
+        iter::empty()
+    }
 }
 
 pub struct Leaf1<K: Key, V> {
@@ -22,9 +58,16 @@ impl<K: Key, V> Leaf1<K, V> {
     }
 }
 
+impl<'a, K: Key + 'a, V: 'a> IntoIterator for &'a Leaf1<K, V> {
+    type Item = (K, &'a V);
+    type IntoIter = iter::Once<Self::Item>;
+    fn into_iter(self) -> Self::IntoIter {
+        iter::once((self.key, &self.value))
+    }
+}
+
 /// A leaf root with one item.
 impl<K: Key, V> RootLeaf<K, V> for Leaf1<K, V> {
-    type OverflowNode = Leaf2<K, V>;
     fn get(&self, key: K) -> Option<&V> {
         if self.key == key {
             Some(&self.value)
@@ -42,8 +85,8 @@ impl<K: Key, V> RootLeaf<K, V> for Leaf1<K, V> {
         }
     }
 
-    fn expand(self, key: K, value: V) -> Leaf2<K, V> {
-        Leaf2::new(self.key, self.value, key, value)
+    fn expand(self: Box<Self>, key: K, value: V) -> RootPtr<K, V> {
+        Box::new(Leaf2::new(self.key, self.value, key, value)).into()
     }
 
     fn len(&self) -> usize {
@@ -73,7 +116,6 @@ impl<K: Key, V> Leaf2<K, V> {
 }
 
 impl<K: Key, V> RootLeaf<K, V> for Leaf2<K, V> {
-    type OverflowNode = VecLeaf<K, V>;
     fn get(&self, key: K) -> Option<&V> {
         self.keys.iter()
             .zip(self.values.iter())
@@ -91,11 +133,11 @@ impl<K: Key, V> RootLeaf<K, V> for Leaf2<K, V> {
         InsertResult::Resize(value)
     }
 
-    fn expand(self, key: K, value: V) -> VecLeaf<K, V> {
-        let Leaf2 { keys, values } = self;
-        let mut leaf = VecLeaf::from_arrays(keys, values);
+    fn expand(self: Box<Self>, key: K, value: V) -> RootPtr<K, V> {
+        let Leaf2 { keys, values } = *self;
+        let mut leaf = Box::new(VecLeaf::from_arrays(keys, values));
         leaf.insert(key, value).success();
-        leaf
+        leaf.into()
     }
 
     fn len(&self) -> usize {
@@ -126,7 +168,6 @@ impl<K: Key, V> VecLeaf<K, V> {
 }
 
 impl<K: Key, V> RootLeaf<K, V> for VecLeaf<K, V> {
-    type OverflowNode = JPM<K, V>;
     fn get(&self, key: K) -> Option<&V> {
         self.array.array1()
             .binary_search(&key)
@@ -152,13 +193,11 @@ impl<K: Key, V> RootLeaf<K, V> for VecLeaf<K, V> {
         }
     }
 
-    fn expand(self, key: K, value: V) -> JPM<K, V> {
-        // TODO: Implement transition
-        JPM::new()
+    fn expand(self: Box<Self>, key: K, value: V) -> RootPtr<K, V> {
+        unimplemented!()
     }
 
     fn len(&self) -> usize {
         self.array.len()
     }
 }
-

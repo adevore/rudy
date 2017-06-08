@@ -7,3 +7,5 @@ pub mod leaf_bitmap;
 pub mod leaf_linear;
 pub mod jpm_root;
 pub mod traits;
+
+pub use self::jpm_root::Jpm;
