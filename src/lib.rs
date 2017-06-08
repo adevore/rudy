@@ -1,3 +1,7 @@
+#![allow(unused_imports)]
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 extern crate nodrop;
 extern crate num_traits;
 extern crate num;
