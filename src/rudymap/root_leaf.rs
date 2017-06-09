@@ -1,4 +1,5 @@
 use std::marker::PhantomData;
+use std::mem;
 use util::locksteparray::{LockstepArray, InsertError};
 use super::jpm::jpm_root::Jpm;
 use ::Key;
@@ -8,6 +9,7 @@ use super::rootptr::RootPtr;
 
 pub trait RootLeaf<K: Key, V> {
     fn get(&self, key: K) -> Option<&V>;
+    fn get_mut(&mut self, key: K) -> Option<&mut V>;
     fn insert(&mut self, key: K, value: V) -> InsertResult<V>;
     fn expand(self: Box<Self>, key: K, value: V) -> RootPtr<K, V>;
     fn len(&self) -> usize;
@@ -23,6 +25,10 @@ impl<K: Key, V> Empty<K, V> {
 
 impl<K: Key, V> RootLeaf<K, V> for Empty<K, V> {
     fn get(&self, key: K) -> Option<&V> {
+        None
+    }
+
+    fn get_mut(&mut self, key: K) -> Option<&mut V> {
         None
     }
 
@@ -76,10 +82,17 @@ impl<K: Key, V> RootLeaf<K, V> for Leaf1<K, V> {
         }
     }
 
+    fn get_mut(&mut self, key: K) -> Option<&mut V> {
+        if self.key == key {
+            Some(&mut self.value)
+        } else {
+            None
+        }
+    }
+
     fn insert(&mut self, key: K, value: V) -> InsertResult<V> {
         if self.key == key {
-            self.value = value;
-            InsertResult::Success
+            InsertResult::replace(&mut self.value, value)
         } else {
             InsertResult::Resize(value)
         }
@@ -122,12 +135,19 @@ impl<K: Key, V> RootLeaf<K, V> for Leaf2<K, V> {
             .find(|&(&leaf_key, _)| leaf_key == key)
             .map(|(key, value)| value)
     }
+
+    fn get_mut(&mut self, key: K) -> Option<&mut V> {
+        self.keys.iter()
+            .zip(self.values.iter_mut())
+            .find(|&(&leaf_key, _)| leaf_key == key)
+            .map(|(key, value)| value)
+    }
+
     /// Attempt to insert, fail if we didn't find a key to replace
     fn insert(&mut self, key: K, value: V) -> InsertResult<V> {
         for (i, leaf_key) in self.keys.iter().enumerate() {
             if key == *leaf_key {
-                self.values[i] = value;
-                return InsertResult::Success
+                return InsertResult::replace(&mut self.values[i], value);
             }
         }
         InsertResult::Resize(value)
@@ -175,14 +195,21 @@ impl<K: Key, V> RootLeaf<K, V> for VecLeaf<K, V> {
             .map(|index| &self.array.array2()[index])
     }
 
+    fn get_mut(&mut self, key: K) -> Option<&mut V> {
+        self.array.array1_mut()
+            .binary_search(&key)
+            .ok()
+            .map(move |index| &mut self.array.array2_mut()[index])
+    }
+
     fn insert(&mut self, key: K, value: V) -> InsertResult<V> {
         match self.array.array1().binary_search(&key) {
             Ok(replace) => {
-                self.array.array2_mut()[replace] = value;
-                InsertResult::Success
+                InsertResult::replace(&mut self.array.array2_mut()[replace],
+                                      value)
             },
             Err(insert) => match self.array.insert(insert, key, value) {
-                Ok(()) => InsertResult::Success,
+                Ok(()) => InsertResult::Success(None),
                 Err(InsertError::Overflow(key, value)) => {
                     InsertResult::Resize(value)
                 },

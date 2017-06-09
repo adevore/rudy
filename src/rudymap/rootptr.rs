@@ -96,6 +96,24 @@ macro_rules! impl_root_ptr {
                 }
             }
 
+            pub fn get(&self, key: K) -> Option<&V> {
+                match self.as_ref() {
+                    RootRef::Empty(_) => None,
+                    $(
+                        RootRef::$type_name(node) => node.get(key),
+                    )*
+                }
+            }
+
+            pub fn get_mut(&mut self, key: K) -> Option<&mut V> {
+                match self.as_mut() {
+                    RootMut::Empty(_) => None,
+                    $(
+                        RootMut::$type_name(node) => node.get_mut(key),
+                    )*
+                }
+            }
+
             fn type_code(&self) -> usize {
                 self.word & 0b111
             }
@@ -153,14 +171,20 @@ macro_rules! impl_root_ptr_dispatch {
                 }
             }
 
-            pub fn insert(&mut self, key: K, value: V) {
+            pub fn insert(&mut self, key: K, value: V) -> Option<V> {
                 let result = match self.as_mut() {
                     $(
                         RootMut::$type_name(mut node) => node.insert(key, value),
                     )*
                 };
-                if let InsertResult::Resize(value) = result {
-                    *self = self.take().expand(key, value);
+                match result {
+                    InsertResult::Success(evicted) => {
+                        evicted
+                    },
+                    InsertResult::Resize(value) => {
+                        *self = self.take().expand(key, value);
+                        None
+                    }
                 }
             }
 

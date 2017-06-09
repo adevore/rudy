@@ -25,6 +25,10 @@ impl<K: Key, V> JpmNode<K, V> for Empty<K, V> {
         None
     }
 
+    fn get_mut(&mut self, key: &[u8]) -> Option<&mut V> {
+        unimplemented!()
+    }
+
     fn insert(&mut self, key: &[u8], value: V) -> InsertResult<V> {
         InsertResult::Resize(value)
     }

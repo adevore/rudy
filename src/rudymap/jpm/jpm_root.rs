@@ -25,12 +25,17 @@ impl<K: Key, V> RootLeaf<K, V> for Jpm<K, V> {
         self.head.get(bytes.as_ref())
     }
 
+    fn get_mut(&mut self, key: K) -> Option<&mut V> {
+        let bytes = key.into_bytes();
+        self.head.get_mut(bytes.as_ref())
+    }
+
     fn insert(&mut self, key: K, value: V) -> InsertResult<V> {
         let bytes = key.into_bytes();
         if let InsertResult::Resize(value) = self.head.insert(bytes.as_ref(), value) {
             self.head = self.head.take().expand(bytes.as_ref(), value);
         }
-        InsertResult::Success
+        InsertResult::Success(None)
     }
 
     fn expand(mut self: Box<Self>, key: K, value: V) -> RootPtr<K, V> {

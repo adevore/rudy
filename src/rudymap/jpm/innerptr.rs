@@ -87,6 +87,16 @@ macro_rules! make_inner_ptr {
                 }
             }
 
+            pub fn get_mut(&mut self, bytes: &[u8]) -> Option<&mut V> {
+                match self.as_mut() {
+                    $(
+                        Mut::$type(target) => {
+                            target.get_mut(bytes)
+                        },
+                    )*
+                }
+            }
+
             pub fn insert(&mut self, bytes: &[u8], value: V) -> InsertResult<V> {
                 match self.as_mut() {
                     $(

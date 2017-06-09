@@ -25,6 +25,10 @@ impl<K: Key, V> JpmNode<K, V> for LeafLinear<K, V> {
         unimplemented!();
     }
 
+    fn get_mut(&mut self, key: &[u8]) -> Option<&mut V> {
+        unimplemented!()
+    }
+
     fn insert(&mut self, key: &[u8], value: V) -> InsertResult<V> {
         unimplemented!();
     }
