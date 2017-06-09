@@ -99,6 +99,7 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
         assert!(slice1.len() <= lockstep.array1.capacity());
         assert!(slice2.len() <= lockstep.array2.capacity());
         assert_eq!(slice1.len(), slice2.len());
+        // TODO: Implement from_slices, will require unsafe code
         lockstep
     }
 
@@ -109,7 +110,9 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
         }
         unsafe {
             let p1 = self.array1.as_mut_ptr();
+            ptr::write(p1.offset(self.len.as_usize() as isize), item1);
             let p2 = self.array2.as_mut_ptr();
+            ptr::write(p2.offset(self.len.as_usize() as isize), item2);
         }
         self.len += One::one();
         Ok(())
