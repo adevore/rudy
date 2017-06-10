@@ -6,13 +6,13 @@ pub struct RudyMap<K: Key, V> {
 }
 
 impl<K: Key, V> RudyMap<K, V> {
-    fn new() -> RudyMap<K, V> {
+    pub fn new() -> RudyMap<K, V> {
         RudyMap {
             root: RootPtr::empty()
         }
     }
 
-    fn insert(&mut self, key: K, value: V) -> Option<V> {
+    pub fn insert(&mut self, key: K, value: V) -> Option<V> {
         self.root.insert(key, value)
     }
 
@@ -28,30 +28,30 @@ impl<K: Key, V> RudyMap<K, V> {
     }
     */
 
-    fn contains_key(&self, key: K) -> bool {
+    pub fn contains_key(&self, key: K) -> bool {
         // Because this does not visit the pointer returned by get(), there
         // will not be unnecessary cache fills
         self.get(key).is_some()
     }
 
-    fn get(&self, key: K) -> Option<&V>{
+    pub fn get(&self, key: K) -> Option<&V>{
         self.root.get(key)
     }
 
-    fn get_mut(&mut self, key: K) -> Option<&mut V> {
+    pub fn get_mut(&mut self, key: K) -> Option<&mut V> {
         self.root.get_mut(key)
     }
 
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.root.len()
     }
 
     /*
-    fn iter(&self) -> Iter {
+    pub fn iter(&self) -> impl Iterator<Item=(K, &V)> {
         Iter::new(&self.root)
     }
 
-    fn iter_mut(&self) -> IterMut {
+    pub fn iter_mut(&self) -> impl Iterator<Item=(K, &mut V)> {
         IterMut::new(&mut self.root)
     }
     */

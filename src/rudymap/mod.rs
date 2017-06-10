@@ -2,4 +2,6 @@ mod root_leaf;
 mod rootptr;
 mod jpm;
 mod results;
-mod rudymap;
+pub mod rudymap;
+
+pub use rudymap::rudymap::RudyMap;
