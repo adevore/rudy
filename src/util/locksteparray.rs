@@ -94,12 +94,24 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
         }
     }
 
-    pub fn from_slices(slice1: &[A1::Item], slice2: &[A2::Item]) -> LockstepArray<A1, A2>{
+    pub fn from_arrays<B1, B2>(array1: B1, array2: B2) -> LockstepArray<A1, A2>
+        where B1: Array<Item=A1::Item>, B2: Array<Item=A2::Item> {
         let mut lockstep = LockstepArray::<A1, A2>::new();
-        assert!(slice1.len() <= lockstep.array1.capacity());
-        assert!(slice2.len() <= lockstep.array2.capacity());
-        assert_eq!(slice1.len(), slice2.len());
-        // TODO: Implement from_slices, will require unsafe code
+        // Eventually these will be encoded into the type system
+        assert!(array1.capacity() <= lockstep.array1.capacity());
+        assert!(array2.capacity() <= lockstep.array2.capacity());
+        assert_eq!(array1.capacity(), array2.capacity());
+        // TODO Implement from_arrays, requires unsafe code
+        unsafe {
+            ptr::copy_nonoverlapping(array1.as_ptr(),
+                                     lockstep.array1.as_mut_ptr(),
+                                     array1.capacity());
+            mem::forget(array1);
+            ptr::copy_nonoverlapping(array2.as_ptr(),
+                                     lockstep.array2.as_mut_ptr(),
+                                     array2.capacity());
+            mem::forget(array2);
+        }
         lockstep
     }
 
