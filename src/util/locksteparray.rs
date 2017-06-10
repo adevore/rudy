@@ -154,7 +154,7 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
 
     pub fn insert(&mut self, index: usize, item1: A1::Item, item2: A2::Item)
                   -> Result<(), InsertError<A1::Item, A2::Item>> {
-        if index >= self.len.as_usize() {
+        if index > self.len.as_usize() {
             Err(InsertError::OutOfBounds(item1, item2))
         } else if self.len.as_usize() == self.array1.capacity() {
             Err(InsertError::Overflow(item1, item2))
