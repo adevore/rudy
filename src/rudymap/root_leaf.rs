@@ -178,12 +178,9 @@ impl<K: Key, V> VecLeaf<K, V> {
     }
 
     fn from_arrays(keys: [K; 2], values: [V; 2]) -> VecLeaf<K, V> {
-        /*
         VecLeaf {
             array: LockstepArray::from_arrays(keys, values)
         }
-         */
-        unimplemented!();
     }
 }
 
