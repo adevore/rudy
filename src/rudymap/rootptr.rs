@@ -83,12 +83,15 @@ macro_rules! impl_root_ptr {
             }
 
             pub fn into_owned(self) -> RootOwned<K, V> {
-                match self.type_code() {
+                let ptr = self.ptr_mut();
+                let type_code = self.type_code();
+                ::std::mem::forget(self);
+                match type_code {
                     0 => RootOwned::Empty(Box::new(Empty::new())),
                     $(
                         $type_code => RootOwned::$type_name(
                             unsafe {
-                                Box::from_raw(self.ptr_mut() as *mut $type_name<K, V>)
+                                Box::from_raw(ptr as *mut $type_name<K, V>)
                             }
                         ),
                     )*
@@ -129,15 +132,7 @@ macro_rules! impl_root_ptr {
 
         impl<K: Key, V> Drop for RootPtr<K, V> {
             fn drop(&mut self) {
-                match self.type_code() {
-                    0 => {},
-                    $(
-                        $type_code => unsafe {
-                            Box::from_raw(self.ptr_mut() as *mut $type_name<K, V>);
-                        },
-                    )*
-                    x => panic!("Invalid type_code {}", x)
-                }
+                self.take().into_owned();
             }
         }
 
@@ -156,7 +151,6 @@ macro_rules! impl_root_ptr {
             $($type_code => $type_name,)*
             0 => Empty
         );
-
     }
 }
 
