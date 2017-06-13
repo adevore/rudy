@@ -23,15 +23,18 @@ types and the usage of larger types, with possible impact to performance.
 # Status
 
 - [x] General library structure
-- [ ] Top-level root nodes (Leaf1, Leaf2, VecLeaf)
+- [x] Top-level root nodes
+    - [x] Leaf1
+    - [x] Leaf2
+    - [x] VecLeaf
 - [ ] JPM
     - [ ] Linear Leaf
-    - [ ] Bitmap Leaf
+    - [x] Bitmap Leaf
     - [ ] Bitmap Branch
     - [ ] Linear Branch
-    - [ ] Uncompressed Branch
-- [ ] Insertion
-- [ ] Get
+    - [x] Uncompressed Branch
+- [x] Insertion
+- [x] Get (buggy)
 - [ ] Remove
 - [ ] Memory used
 - [ ] Shrink
