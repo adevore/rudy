@@ -55,7 +55,7 @@ macro_rules! make_inner_ptr {
 
         impl<K: Key, V> InnerPtr<K, V> {
             pub fn new<B: IntoPtr<K, V>>(boxed: Box<B>, pop: usize) -> InnerPtr<K, V> {
-                IntoPtr::into(boxed, Population::new(pop))
+                IntoPtr::into_ptr(boxed, pop)
             }
 
             pub fn as_ref<'a>(&'a self) -> Ref<'a, K, V> {
@@ -97,23 +97,29 @@ macro_rules! make_inner_ptr {
                 }
             }
 
-            pub fn insert(&mut self, bytes: &[u8], value: V) -> InsertResult<V> {
-                match self.as_mut() {
+            pub fn insert(&mut self, key: &[u8], value: V) -> Option<V> {
+                let insert_result = match self.as_mut() {
                     $(
                         Mut::$type(target) => {
-                            target.insert(bytes, value)
+                            target.insert(key, value)
                         },
                     )*
+                };
+                match insert_result {
+                    InsertResult::Success(evicted) => evicted,
+                    InsertResult::Resize(value) => {
+                        *self = self.take().expand(key, value);
+                        None
+                    }
                 }
             }
 
-            pub fn expand(self, key: &[u8], value: V) -> InnerPtr<K, V> {
+            fn expand(self, key: &[u8], value: V) -> InnerPtr<K, V> {
                 match self {
                     $(
                         InnerPtr::$type(target, pop) => {
-                            let node = target.expand(key, value);
-                            let len = pop.as_usize() + 1;
-                            InnerPtr::new(node, len)
+                            let new_pop = pop.as_usize() + 1;
+                            target.expand(new_pop, key, value)
                         },
                     )*
                 }
@@ -126,13 +132,13 @@ macro_rules! make_inner_ptr {
 
 
         pub trait IntoPtr<K: Key, V> {
-            fn into(from: Box<Self>, pop: Population) -> InnerPtr<K, V>;
+            fn into_ptr(from: Box<Self>, pop: usize) -> InnerPtr<K, V>;
         }
 
         $(
             impl<K: Key, V> IntoPtr<K, V> for $type<K, V> {
-                fn into(from: Box<Self>, pop: Population) -> InnerPtr<K, V> {
-                    InnerPtr::$type(from, pop)
+                fn into_ptr(from: Box<Self>, pop: usize) -> InnerPtr<K, V> {
+                    InnerPtr::$type(from, Population::new(pop))
                 }
             }
         )*
@@ -172,7 +178,7 @@ mod test {
         WordInnerPtr::new(Box::new(BranchLinear::new()), 0);
         WordInnerPtr::new(Box::new(BranchBitmap::new()), 0);
         WordInnerPtr::new(Box::new(BranchUncompressed::new()), 0);
-        WordInnerPtr::new(Box::new(LeafLinear::new()), 0);
-        WordInnerPtr::new(Box::new(LeafBitmap::new()), 0);
+        //WordInnerPtr::new(Box::new(LeafLinear::new()), 0);
+        //WordInnerPtr::new(Box::new(LeafBitmap::new()), 0);
     }
 }

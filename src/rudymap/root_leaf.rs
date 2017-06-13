@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 use std::mem;
-use util::locksteparray::{LockstepArray, InsertError};
+use util::locksteparray;
 use super::jpm::jpm_root::Jpm;
 use ::Key;
 use ::rudymap::results::InsertResult;
@@ -166,23 +166,33 @@ impl<K: Key, V> RootLeaf<K, V> for Leaf2<K, V> {
 }
 
 pub struct VecLeaf<K: Key, V> {
-    array: LockstepArray<[K; 31], [V; 31]>
+    array: locksteparray::LockstepArray<[K; 31], [V; 31]>
 }
 
 impl<K: Key, V> VecLeaf<K, V> {
     fn new() -> VecLeaf<K, V> {
         // TODO Copy memory from values
         VecLeaf {
-            array: LockstepArray::new()
+            array: locksteparray::LockstepArray::new()
         }
     }
 
     fn from_arrays(keys: [K; 2], values: [V; 2]) -> VecLeaf<K, V> {
         VecLeaf {
-            array: LockstepArray::from_arrays(keys, values)
+            array: locksteparray::LockstepArray::from_arrays(keys, values)
         }
     }
 }
+
+impl<K: Key, V> IntoIterator for VecLeaf<K, V> {
+    type Item = (K, V);
+    type IntoIter = locksteparray::IntoIter<[K; 31], [V; 31]>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.array.into_iter()
+    }
+}
+
 
 impl<K: Key, V> RootLeaf<K, V> for VecLeaf<K, V> {
     fn get(&self, key: K) -> Option<&V> {
@@ -207,10 +217,10 @@ impl<K: Key, V> RootLeaf<K, V> for VecLeaf<K, V> {
             },
             Err(insert) => match self.array.insert(insert, key, value) {
                 Ok(()) => InsertResult::Success(None),
-                Err(InsertError::Overflow(key, value)) => {
+                Err(locksteparray::InsertError::Overflow(key, value)) => {
                     InsertResult::Resize(value)
                 },
-                Err(InsertError::OutOfBounds(..)) => {
+                Err(locksteparray::InsertError::OutOfBounds(..)) => {
                     unreachable!()
                 }
             }
@@ -218,7 +228,8 @@ impl<K: Key, V> RootLeaf<K, V> for VecLeaf<K, V> {
     }
 
     fn expand(self: Box<Self>, key: K, value: V) -> RootPtr<K, V> {
-        unimplemented!()
+        let jpm: Jpm<K, V> = self.into_iter().collect();
+        Box::new(jpm).into()
     }
 
     fn len(&self) -> usize {

@@ -1,3 +1,4 @@
+use std::iter::FromIterator;
 use rudymap::root_leaf::RootLeaf;
 use super::innerptr::InnerPtr;
 use super::traits::JpmNode;
@@ -32,10 +33,7 @@ impl<K: Key, V> RootLeaf<K, V> for Jpm<K, V> {
 
     fn insert(&mut self, key: K, value: V) -> InsertResult<V> {
         let bytes = key.into_bytes();
-        if let InsertResult::Resize(value) = self.head.insert(bytes.as_ref(), value) {
-            self.head = self.head.take().expand(bytes.as_ref(), value);
-        }
-        InsertResult::Success(None)
+        InsertResult::Success(self.head.insert(bytes.as_ref(), value))
     }
 
     fn expand(mut self: Box<Self>, key: K, value: V) -> RootPtr<K, V> {
@@ -45,5 +43,15 @@ impl<K: Key, V> RootLeaf<K, V> for Jpm<K, V> {
 
     fn len(&self) -> usize {
         self.len
+    }
+}
+
+impl<K: Key, V> FromIterator<(K, V)> for Jpm<K, V> {
+    fn from_iter<I>(iter: I) -> Self where I: IntoIterator<Item=(K, V)> {
+        let mut jpm = Jpm::new();
+        for (key, value) in iter {
+            jpm.insert(key, value).success();
+        }
+        jpm
     }
 }

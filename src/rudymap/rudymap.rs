@@ -70,6 +70,6 @@ fn test_insert_get_2() {
     let mut map = RudyMap::<usize, usize>::new();
     map.insert(0usize, 10usize);
     map.insert(1usize, 20usize);
-    //assert_eq!(map.get(0), Some(&10));
-    //assert_eq!(map.get(1), Some(&20));
+    assert_eq!(map.get(0), Some(&10));
+    assert_eq!(map.get(1), Some(&20));
 }

@@ -18,7 +18,6 @@ impl<K: Key, V> BranchLinear<K, V> {
 }
 
 impl<K: Key, V> JpmNode<K, V> for BranchLinear<K, V> {
-    type OverflowNode = BranchBitmap<K, V>;
     fn get(&self, key: &[u8]) -> Option<&V> {
         unimplemented!();
     }
@@ -31,7 +30,7 @@ impl<K: Key, V> JpmNode<K, V> for BranchLinear<K, V> {
         unimplemented!();
     }
 
-    fn expand(self, key: &[u8], value: V) -> Box<BranchBitmap<K, V>> {
+    fn expand(self: Box<Self>, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
         unimplemented!();
     }
 }

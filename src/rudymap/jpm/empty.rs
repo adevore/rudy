@@ -1,7 +1,9 @@
 use super::traits::JpmNode;
-use super::innerptr::InnerPtr;
+use super::innerptr::{InnerPtr, IntoPtr};
 use ::Key;
-use super::leaf_linear::LeafLinear;
+//use super::leaf_linear::LeafLinear;
+use super::leaf_bitmap::LeafBitmap;
+use super::branch_uncompressed::BranchUncompressed;
 use ::rudymap::results::InsertResult;
 
 use std::marker::PhantomData;
@@ -20,22 +22,30 @@ impl<K: Key, V> Empty<K, V> {
 }
 
 impl<K: Key, V> JpmNode<K, V> for Empty<K, V> {
-    type OverflowNode = LeafLinear<K, V>;
     fn get(&self, key: &[u8]) -> Option<&V> {
         None
     }
 
     fn get_mut(&mut self, key: &[u8]) -> Option<&mut V> {
-        unimplemented!()
+        None
     }
 
     fn insert(&mut self, key: &[u8], value: V) -> InsertResult<V> {
         InsertResult::Resize(value)
     }
 
-    fn expand(self, key: &[u8], value: V) -> Box<LeafLinear<K, V>> {
-        let mut leaf_linear = Box::new(LeafLinear::new());
-        leaf_linear.insert(key, value).success();
-        leaf_linear
+    fn expand(self: Box<Self>, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
+        //let mut leaf_linear = Box::new(LeafLinear::new());
+        //leaf_linear.insert(key, value).success();
+        //leaf_linear
+        if key.len() == 1 {
+            let mut leaf = Box::new(LeafBitmap::new());
+            leaf.insert(key, value).success();
+            IntoPtr::into_ptr(leaf, pop)
+        } else {
+            let mut branch = Box::new(BranchUncompressed::new());
+            branch.insert(key, value).success();
+            IntoPtr::into_ptr(branch, pop)
+        }
     }
 }

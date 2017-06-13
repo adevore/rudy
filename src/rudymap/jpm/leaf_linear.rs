@@ -3,24 +3,29 @@ use super::innerptr::InnerPtr;
 use ::rudymap::results::InsertResult;
 use ::Key;
 use super::leaf_bitmap::LeafBitmap;
+use std::marker::PhantomData;
 
-pub struct LeafLinear<K, V> {
-    keys: PackedArray<K>,
-    values: [V; 4]
-}
-
-struct PackedArray<T> where T: Sized {
-    keys: [T; 4]
+pub struct LeafLinear<K: Key, V> {
+    /*
+    keys: [u8; <K as Key>::SIZE * 4],
+    values: [V; 4],
+    */
+    pd: PhantomData<(K, V)>
 }
 
 impl<K: Key, V> LeafLinear<K, V> {
     pub fn new() -> LeafLinear<K, V> {
         unimplemented!();
+        /*
+        LeafLinear {
+            keys: [0; K::SIZE * 4],
+            values:
+        }
+        */
     }
 }
 
 impl<K: Key, V> JpmNode<K, V> for LeafLinear<K, V> {
-    type OverflowNode = LeafBitmap<K, V>;
     fn get(&self, key: &[u8]) -> Option<&V> {
         unimplemented!();
     }
@@ -33,7 +38,7 @@ impl<K: Key, V> JpmNode<K, V> for LeafLinear<K, V> {
         unimplemented!();
     }
 
-    fn expand(self, key: &[u8], value: V) -> Box<LeafBitmap<K, V>> {
+    fn expand(self: Box<Self>, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
         unimplemented!();
     }
 }

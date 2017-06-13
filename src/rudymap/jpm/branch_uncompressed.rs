@@ -25,21 +25,23 @@ impl<K: Key, V> BranchUncompressed<K, V> {
 }
 
 impl<K: Key, V> JpmNode<K, V> for BranchUncompressed<K, V> {
-    type OverflowNode = BranchUncompressed<K, V>;
     fn get(&self, key: &[u8]) -> Option<&V> {
-        unimplemented!();
+        let (&byte, subkey) = key.split_first().unwrap();
+        self.array[byte as usize].get(subkey)
     }
 
     fn get_mut(&mut self, key: &[u8]) -> Option<&mut V> {
-        unimplemented!()
+        let (&byte, subkey) = key.split_first().unwrap();
+        self.array[byte as usize].get_mut(subkey)
     }
 
-    fn insert(&mut self, key: &[u8], value: V)
-              -> InsertResult<V> {
-        unimplemented!();
+    fn insert(&mut self, key: &[u8], value: V) -> InsertResult<V> {
+        let (&byte, subkey) = key.split_first().unwrap();
+        let evicted = self.array[byte as usize].insert(subkey, value);
+        InsertResult::Success(evicted)
     }
 
-    fn expand(self, key: &[u8], value: V) -> Box<BranchUncompressed<K, V>> {
-        unimplemented!();
+    fn expand(self: Box<Self>, population: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
+        unreachable!()
     }
 }
