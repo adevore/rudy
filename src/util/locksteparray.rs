@@ -251,3 +251,42 @@ impl<A1, A2> Default for LockstepArray<A1, A2> where A1: Array, A2: Array {
         Self::new()
     }
 }
+
+impl<A1, A2> IntoIterator for LockstepArray<A1, A2> where A1: Array, A2: Array {
+    type Item = (A1::Item, A2::Item);
+    type IntoIter = IntoIter<A1, A2>;
+    fn into_iter(self) -> Self::IntoIter {
+        let LockstepArray { len, array1, array2 } = self;
+        IntoIter {
+            len: len.as_usize(),
+            array1: array1,
+            array2: array2,
+            pos: 0
+        }
+    }
+}
+
+pub struct IntoIter<A1: Array, A2: Array> {
+    len: usize,
+    array1: NoDrop<A1>,
+    array2: NoDrop<A2>,
+    pos: usize
+}
+
+impl<A1: Array, A2: Array> Iterator for IntoIter<A1, A2> {
+    type Item = (A1::Item, A2::Item);
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.pos == self.len {
+            None
+        } else {
+            unsafe {
+                let ptr1 = self.array1.as_mut_ptr().offset(self.pos as isize);
+                let item1 = ptr::read(ptr1);
+                let ptr2 = self.array2.as_mut_ptr().offset(self.pos as isize);
+                let item2 = ptr::read(ptr2);
+                self.pos += 1;
+                Some((item1, item2))
+            }
+        }
+    }
+}
