@@ -6,7 +6,7 @@ use super::leaf_linear::LeafLinear;
 use super::leaf_bitmap::LeafBitmap;
 use super::traits::JpmNode;
 use ::rudymap::results::InsertResult;
-use ::util::util::{partial_write, partial_read};
+use ::util::{partial_write, partial_read};
 use ::Key;
 
 #[cfg(target_pointer_width = "32")]

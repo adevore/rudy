@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use std::mem;
 use util::locksteparray;
-use util::util::SliceExt;
+use util::SliceExt;
 use super::jpm::jpm_root::Jpm;
 use ::Key;
 use ::rudymap::results::InsertResult;

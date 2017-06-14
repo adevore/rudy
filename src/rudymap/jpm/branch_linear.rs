@@ -1,6 +1,6 @@
 use ::util::locksteparray::LockstepArray;
 use ::util::locksteparray;
-use ::util::util::SliceExt;
+use ::util::SliceExt;
 use super::innerptr::{InnerPtr, IntoPtr};
 use ::Key;
 use super::traits::JpmNode;
