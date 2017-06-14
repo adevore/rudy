@@ -101,7 +101,7 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
         assert!(array1.capacity() <= lockstep.array1.capacity());
         assert!(array2.capacity() <= lockstep.array2.capacity());
         assert_eq!(array1.capacity(), array2.capacity());
-        // TODO Implement from_arrays, requires unsafe code
+        let len = A1::Index::from_usize(array1.capacity());
         unsafe {
             ptr::copy_nonoverlapping(array1.as_ptr(),
                                      lockstep.array1.as_mut_ptr(),
@@ -112,6 +112,7 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
                                      array2.capacity());
             mem::forget(array2);
         }
+        lockstep.len = len;
         lockstep
     }
 
