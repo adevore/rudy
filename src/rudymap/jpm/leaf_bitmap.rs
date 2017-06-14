@@ -1,41 +1,81 @@
+/// # Plans
+/// Current this uses raw bit operations to provide a packed representation
+/// with an interface similar to [Option<T>; N]. Once integer generics land,
+/// it can instead use an abstraction layer to provide operations. Hopefully
+/// that can be maintained as a separate crate.
+
 use std::marker::PhantomData;
 use std::mem;
+use std::ptr;
 use super::traits::JpmNode;
 use super::innerptr::InnerPtr;
 use ::rudymap::results::InsertResult;
 use ::Key;
+use nodrop::NoDrop;
 
 pub struct LeafBitmap<K: Key, V> {
-    array: [Option<V>; 256],
+    keys: [u8; 256 / 8],
+    values: NoDrop<[V; 256]>,
     pd: PhantomData<K>
 }
 
 impl<K: Key, V> LeafBitmap<K, V> {
     pub fn new() -> LeafBitmap<K, V> {
         LeafBitmap {
-            array: unsafe { mem::zeroed() },
+            keys: [0; 256 / 8],
+            values: unsafe { mem::zeroed() },
             pd: PhantomData
         }
     }
 }
 
-fn singleton_index(key: &[u8]) -> usize {
+#[derive(Debug)]
+enum Place {
+    Occupied(usize),
+    Empty(usize)
+}
+
+fn singleton_index(key: &[u8], keys: &[u8; 256 / 8]) -> Place {
     debug_assert!(key.len() == 1);
-    key[0] as usize
+    let index = key[0] as usize;
+    let occupied = keys[index / 8] & (1 << (index % 8));
+    if occupied != 0 {
+        Place::Occupied(index)
+    } else {
+        Place::Empty(index)
+    }
 }
 
 impl<K: Key, V> JpmNode<K, V> for LeafBitmap<K, V> {
     fn get(&self, key: &[u8]) -> Option<&V> {
-        self.array[singleton_index(key)].as_ref()
+        match singleton_index(key, &self.keys) {
+            Place::Occupied(index) => Some(&self.values[index]),
+            Place::Empty(index) => None
+        }
     }
 
     fn get_mut(&mut self, key: &[u8]) -> Option<&mut V> {
-        self.array[singleton_index(key)].as_mut()
+        match singleton_index(key, &self.keys) {
+            Place::Occupied(index) => Some(&mut self.values[index]),
+            Place::Empty(index) => None
+        }
     }
 
     fn insert(&mut self, key: &[u8], value: V) -> InsertResult<V> {
-        let place = &mut self.array[singleton_index(key)];
-        InsertResult::Success(mem::replace(place, Some(value)))
+        match singleton_index(key, &self.keys) {
+            Place::Occupied(index) => {
+                let place = &mut self.values[index];
+                InsertResult::replace(place, value)
+            },
+            Place::Empty(index) => {
+                let place = &mut self.values[index];
+                self.keys[index / 8] |= 1 << (index % 8);
+                unsafe {
+                    ptr::write(place, value);
+                }
+                InsertResult::Success(None)
+            }
+        }
     }
 
     fn expand(self: Box<Self>, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
