@@ -30,8 +30,8 @@ types and the usage of larger types, with possible impact to performance.
 - [ ] JPM
     - [ ] Linear Leaf
     - [x] Bitmap Leaf
-    - [ ] Bitmap Branch
-    - [ ] Linear Branch
+    - [x] Bitmap Branch
+    - [x] Linear Branch
     - [x] Uncompressed Branch
 - [x] Insertion
 - [x] Get (buggy)
