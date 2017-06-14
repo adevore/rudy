@@ -197,15 +197,15 @@ impl<K: Key, V> IntoIterator for VecLeaf<K, V> {
 impl<K: Key, V> RootLeaf<K, V> for VecLeaf<K, V> {
     fn get(&self, key: K) -> Option<&V> {
         self.array.array1()
-            .binary_search(&key)
-            .ok()
+            .iter()
+            .position(|&k| k == key)
             .map(|index| &self.array.array2()[index])
     }
 
     fn get_mut(&mut self, key: K) -> Option<&mut V> {
         self.array.array1_mut()
-            .binary_search(&key)
-            .ok()
+            .iter()
+            .position(|&k| k == key)
             .map(move |index| &mut self.array.array2_mut()[index])
     }
 

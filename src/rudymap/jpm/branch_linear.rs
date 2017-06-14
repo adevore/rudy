@@ -23,16 +23,16 @@ impl<K: Key, V> JpmNode<K, V> for BranchLinear<K, V> {
     fn get(&self, key: &[u8]) -> Option<&V> {
         let (byte, subkey) = key.split_first().unwrap();
         self.array.array1()
-            .binary_search(byte)
-            .ok()
+            .iter()
+            .position(|b| b == byte)
             .and_then(|index| self.array.array2()[index].get(subkey))
     }
 
     fn get_mut(&mut self, key: &[u8]) -> Option<&mut V> {
         let (byte, subkey) = key.split_first().unwrap();
         self.array.array1_mut()
-            .binary_search(byte)
-            .ok()
+            .iter()
+            .position(|b| b == byte)
             .and_then(move |index|
                       self.array.array2_mut()[index].get_mut(subkey))
     }
