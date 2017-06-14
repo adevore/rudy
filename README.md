@@ -34,7 +34,7 @@ types and the usage of larger types, with possible impact to performance.
     - [x] Linear Branch
     - [x] Uncompressed Branch
 - [x] Insertion
-- [x] Get (buggy)
+- [x] Get
 - [ ] Remove
 - [ ] Memory used
 - [ ] Shrink
