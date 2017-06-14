@@ -2,6 +2,7 @@ use std::mem;
 use std::ops;
 use std::ptr;
 use std::slice;
+use std::iter;
 
 use nodrop::NoDrop;
 
@@ -9,6 +10,7 @@ use num_traits::{Unsigned, Zero, One};
 
 pub struct OverflowError<T1, T2>(pub T1, pub T2);
 
+#[derive(Debug)]
 pub enum InsertError<T1, T2> {
     Overflow(T1, T2),
     OutOfBounds(T1, T2)
@@ -290,4 +292,15 @@ impl<A1: Array, A2: Array> Iterator for IntoIter<A1, A2> {
             }
         }
     }
+}
+
+#[test]
+fn test_into_iter() {
+    let mut locksteparray = LockstepArray::<[u8; 7], [u8; 7]>::new();
+    locksteparray.insert(0, 4, 5).unwrap();
+    locksteparray.insert(1, 3, 4).unwrap();
+    let mut iter = locksteparray.into_iter();
+    assert_eq!(iter.next(), Some((4, 5)));
+    assert_eq!(iter.next(), Some((3, 4)));
+    assert_eq!(iter.next(), None);
 }
