@@ -4,6 +4,5 @@ version = "0.1.0"
 authors = ["Aaron DeVore <aaron.devore@gmail.com>"]
 
 [dependencies]
-nodrop = "*"
-num-traits = "*"
-num = "*"
+nodrop = "0.1"
+num-traits = "0.1"

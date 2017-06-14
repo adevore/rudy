@@ -41,7 +41,7 @@ impl<K: Key, V> JpmNode<K, V> for BranchUncompressed<K, V> {
         InsertResult::Success(evicted)
     }
 
-    fn expand(self: Box<Self>, population: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
+    fn expand(self, population: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
         unreachable!()
     }
 }

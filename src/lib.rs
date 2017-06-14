@@ -6,7 +6,6 @@
 
 extern crate nodrop;
 extern crate num_traits;
-extern crate num;
 
 mod util;
 pub mod rudymap;

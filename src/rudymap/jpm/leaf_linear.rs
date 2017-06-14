@@ -38,7 +38,7 @@ impl<K: Key, V> JpmNode<K, V> for LeafLinear<K, V> {
         unimplemented!();
     }
 
-    fn expand(self: Box<Self>, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
+    fn expand(self, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
         unimplemented!();
     }
 }

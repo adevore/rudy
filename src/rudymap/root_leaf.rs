@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use std::mem;
 use util::locksteparray;
-use util::util::SliceExt;
+use util::SliceExt;
 use super::jpm::jpm_root::Jpm;
 use ::Key;
 use ::rudymap::results::InsertResult;
@@ -12,7 +12,7 @@ pub trait RootLeaf<K: Key, V> {
     fn get(&self, key: K) -> Option<&V>;
     fn get_mut(&mut self, key: K) -> Option<&mut V>;
     fn insert(&mut self, key: K, value: V) -> InsertResult<V>;
-    fn expand(self: Box<Self>, key: K, value: V) -> RootPtr<K, V>;
+    fn expand(self, key: K, value: V) -> RootPtr<K, V>;
     fn len(&self) -> usize;
 }
 
@@ -37,12 +37,18 @@ impl<K: Key, V> RootLeaf<K, V> for Empty<K, V> {
         InsertResult::Resize(value)
     }
 
-    fn expand(self: Box<Self>, key: K, value: V) -> RootPtr<K, V> {
+    fn expand(self, key: K, value: V) -> RootPtr<K, V> {
         Box::new(Leaf1::new(key, value)).into()
     }
 
     fn len(&self) -> usize {
         0
+    }
+}
+
+impl<K: Key, V> Default for Empty<K, V> {
+    fn default() -> Empty<K, V> {
+        Empty::new()
     }
 }
 
@@ -99,7 +105,7 @@ impl<K: Key, V> RootLeaf<K, V> for Leaf1<K, V> {
         }
     }
 
-    fn expand(self: Box<Self>, key: K, value: V) -> RootPtr<K, V> {
+    fn expand(self, key: K, value: V) -> RootPtr<K, V> {
         Box::new(Leaf2::new(self.key, self.value, key, value)).into()
     }
 
@@ -154,8 +160,8 @@ impl<K: Key, V> RootLeaf<K, V> for Leaf2<K, V> {
         InsertResult::Resize(value)
     }
 
-    fn expand(self: Box<Self>, key: K, value: V) -> RootPtr<K, V> {
-        let Leaf2 { keys, values } = *self;
+    fn expand(self, key: K, value: V) -> RootPtr<K, V> {
+        let Leaf2 { keys, values } = self;
         let mut leaf = Box::new(VecLeaf::from_arrays(keys, values));
         leaf.insert(key, value).success();
         leaf.into()
@@ -228,7 +234,7 @@ impl<K: Key, V> RootLeaf<K, V> for VecLeaf<K, V> {
         }
     }
 
-    fn expand(self: Box<Self>, key: K, value: V) -> RootPtr<K, V> {
+    fn expand(self, key: K, value: V) -> RootPtr<K, V> {
         let mut jpm: Jpm<K, V> = self.into_iter().collect();
         jpm.insert(key, value).success();
         Box::new(jpm).into()

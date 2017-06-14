@@ -6,7 +6,7 @@ use super::leaf_linear::LeafLinear;
 use super::leaf_bitmap::LeafBitmap;
 use super::traits::JpmNode;
 use ::rudymap::results::InsertResult;
-use ::util::util::{partial_write, partial_read};
+use ::util::{partial_write, partial_read};
 use ::Key;
 
 #[cfg(target_pointer_width = "32")]
@@ -58,7 +58,7 @@ macro_rules! make_inner_ptr {
                 IntoPtr::into_ptr(boxed, pop)
             }
 
-            pub fn as_ref<'a>(&'a self) -> Ref<'a, K, V> {
+            pub fn as_ref(&self) -> Ref<K, V> {
                 match *self {
                     $(
                         InnerPtr::$type(ref target, ..) => {
@@ -68,7 +68,7 @@ macro_rules! make_inner_ptr {
                 }
             }
 
-            pub fn as_mut<'a>(&'a mut self) -> Mut<'a, K, V> {
+            pub fn as_mut(&mut self) -> Mut<K, V> {
                 match *self {
                     $(
                         InnerPtr::$type(ref mut target, ..) => {

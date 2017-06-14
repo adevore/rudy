@@ -36,7 +36,7 @@ enum Place {
 }
 
 fn singleton_index(key: &[u8], keys: &[u8; 256 / 8]) -> Place {
-    debug_assert!(key.len() == 1);
+    debug_assert_eq!(key.len(), 1);
     let index = key[0] as usize;
     let occupied = keys[index / 8] & (1 << (index % 8));
     if occupied != 0 {
@@ -78,7 +78,7 @@ impl<K: Key, V> JpmNode<K, V> for LeafBitmap<K, V> {
         }
     }
 
-    fn expand(self: Box<Self>, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
+    fn expand(self, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
         unreachable!();
     }
 }

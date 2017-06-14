@@ -89,7 +89,7 @@ impl<K: Key, V> JpmNode<K, V> for BranchBitmap<K, V> {
         let (&byte, subkey) = key.split_first().unwrap();
         self.subexpanses[byte as usize / 32].insert(byte % 32, subkey, value)
     }
-    fn expand(self: Box<Self>, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
+    fn expand(self, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
         unreachable!()
     }
 }

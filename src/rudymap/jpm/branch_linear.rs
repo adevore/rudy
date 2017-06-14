@@ -1,6 +1,6 @@
 use ::util::locksteparray::LockstepArray;
 use ::util::locksteparray;
-use ::util::util::SliceExt;
+use ::util::SliceExt;
 use super::innerptr::{InnerPtr, IntoPtr};
 use ::Key;
 use super::traits::JpmNode;
@@ -61,7 +61,7 @@ impl<K: Key, V> JpmNode<K, V> for BranchLinear<K, V> {
         }
     }
 
-    fn expand(self: Box<Self>, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
+    fn expand(self, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
         let mut branch: BranchBitmap<K, V> = self.array
             .into_iter()
             .collect();
