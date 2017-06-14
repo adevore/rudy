@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 use std::mem;
 use util::locksteparray;
+use util::util::SliceExt;
 use super::jpm::jpm_root::Jpm;
 use ::Key;
 use ::rudymap::results::InsertResult;
@@ -210,7 +211,7 @@ impl<K: Key, V> RootLeaf<K, V> for VecLeaf<K, V> {
     }
 
     fn insert(&mut self, key: K, value: V) -> InsertResult<V> {
-        match self.array.array1().binary_search(&key) {
+        match self.array.array1().linear_search(&key) {
             Ok(replace) => {
                 InsertResult::replace(&mut self.array.array2_mut()[replace],
                                       value)

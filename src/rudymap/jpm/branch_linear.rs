@@ -1,5 +1,6 @@
 use ::util::locksteparray::LockstepArray;
 use ::util::locksteparray;
+use ::util::util::SliceExt;
 use super::innerptr::{InnerPtr, IntoPtr};
 use ::Key;
 use super::traits::JpmNode;
@@ -39,7 +40,7 @@ impl<K: Key, V> JpmNode<K, V> for BranchLinear<K, V> {
 
     fn insert(&mut self, key: &[u8], value: V) -> InsertResult<V> {
         let (&byte, subkey) = key.split_first().unwrap();
-        match self.array.array1().binary_search(&byte) {
+        match self.array.array1().linear_search(&byte) {
             Ok(found) => {
                 InsertResult::Success(
                     self.array.array2_mut()[found].insert(subkey, value))
