@@ -46,6 +46,10 @@ impl<K: Key, V> RudyMap<K, V> {
         self.root.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /*
     pub fn iter(&self) -> impl Iterator<Item=(K, &V)> {
         Iter::new(&self.root)
