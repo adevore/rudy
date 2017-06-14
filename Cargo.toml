@@ -1,8 +1,12 @@
 [package]
 name = "rudy"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["Aaron DeVore <aaron.devore@gmail.com>"]
 license = "MIT/Apache-2.0"
+description = "Judy array implementation in pure Rust"
+documentation = "https://docs.rs/rudy"
+repository = "https://www.github.com/adevore/rudy/"
+homepage = "https://www.github.com/adevore/rudy/"
 
 [dependencies]
 nodrop = "0.1"
