@@ -61,6 +61,12 @@ impl<K: Key, V> RudyMap<K, V> {
     */
 }
 
+impl<K: Key, V> Default for RudyMap<K, V> {
+    fn default() -> RudyMap<K, V> {
+        RudyMap::new()
+    }
+}
+
 
 #[test]
 fn test_insert_get_1() {

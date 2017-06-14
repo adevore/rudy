@@ -46,6 +46,12 @@ impl<K: Key, V> RootLeaf<K, V> for Empty<K, V> {
     }
 }
 
+impl<K: Key, V> Default for Empty<K, V> {
+    fn default() -> Empty<K, V> {
+        Empty::new()
+    }
+}
+
 impl<'a, K: Key + 'a, V: 'a> IntoIterator for &'a Empty<K, V> {
     type Item = (K, &'a V);
     type IntoIter = iter::Empty<Self::Item>;
