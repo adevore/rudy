@@ -228,7 +228,8 @@ impl<K: Key, V> RootLeaf<K, V> for VecLeaf<K, V> {
     }
 
     fn expand(self: Box<Self>, key: K, value: V) -> RootPtr<K, V> {
-        let jpm: Jpm<K, V> = self.into_iter().collect();
+        let mut jpm: Jpm<K, V> = self.into_iter().collect();
+        jpm.insert(key, value).success();
         Box::new(jpm).into()
     }
 
