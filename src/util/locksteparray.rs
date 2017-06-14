@@ -205,11 +205,11 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
     }
 
     pub fn is_empty(&self) -> bool {
-        return self.len != Zero::zero()
+        self.len != Zero::zero()
     }
 
     pub fn len(&self) -> usize {
-        return self.len.as_usize()
+        self.len.as_usize()
     }
 
     pub fn array1(&self) -> &[A1::Item] {

@@ -7,9 +7,8 @@ fn main() {
     let low = 0;
     let high = 100_000_000;
     for i in low..high {
-        match map.insert(i, i + 1) {
-            Some(evicted) => println!("Evicted: {}", evicted),
-            None => {}
+        if let Some(evicted) = map.insert(i, i + 1) {
+            println!("Evicted: {}", evicted);
         }
     }
     for i in low..high {

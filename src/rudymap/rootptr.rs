@@ -44,8 +44,8 @@ macro_rules! impl_root_ptr {
 
         impl<K: Key, V> RootPtr<K, V> {
             unsafe fn new(ptr: *mut(), type_code: usize) -> RootPtr<K, V> {
-                debug_assert!(ptr as usize & 0b111 == 0,
-                              "Low bits of root ptr {} are set");
+                debug_assert_eq!(ptr as usize & 0b111, 0,
+                              "Low bits of root ptr {:?} are set", ptr);
                 RootPtr {
                     word: ptr as usize | type_code,
                     phantomdata: PhantomData
