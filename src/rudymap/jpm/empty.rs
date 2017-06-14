@@ -4,6 +4,7 @@ use ::Key;
 //use super::leaf_linear::LeafLinear;
 use super::leaf_bitmap::LeafBitmap;
 use super::branch_uncompressed::BranchUncompressed;
+use super::branch_linear::BranchLinear;
 use ::rudymap::results::InsertResult;
 
 use std::marker::PhantomData;
@@ -43,7 +44,7 @@ impl<K: Key, V> JpmNode<K, V> for Empty<K, V> {
             leaf.insert(key, value).success();
             IntoPtr::into_ptr(leaf, pop)
         } else {
-            let mut branch = Box::new(BranchUncompressed::new());
+            let mut branch = Box::new(BranchLinear::new());
             branch.insert(key, value).success();
             IntoPtr::into_ptr(branch, pop)
         }
