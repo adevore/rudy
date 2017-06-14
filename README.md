@@ -39,3 +39,8 @@ types and the usage of larger types, with possible impact to performance.
 - [ ] Memory used
 - [ ] Shrink
 - [ ] Iterators
+
+
+# License
+
+Rudy is dual licensed under the MIT and Apache-2.0 licenses.
