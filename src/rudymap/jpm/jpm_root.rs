@@ -36,9 +36,9 @@ impl<K: Key, V> RootLeaf<K, V> for Jpm<K, V> {
         InsertResult::Success(self.head.insert(bytes.as_ref(), value))
     }
 
-    fn expand(mut self: Box<Self>, key: K, value: V) -> RootPtr<K, V> {
+    fn expand(mut self, key: K, value: V) -> RootPtr<K, V> {
         self.insert(key, value).success();
-        self.into()
+        Box::new(self).into()
     }
 
     fn len(&self) -> usize {

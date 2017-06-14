@@ -78,7 +78,7 @@ impl<K: Key, V> JpmNode<K, V> for LeafBitmap<K, V> {
         }
     }
 
-    fn expand(self: Box<Self>, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
+    fn expand(self, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
         unreachable!();
     }
 }

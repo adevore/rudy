@@ -35,7 +35,7 @@ impl<K: Key, V> JpmNode<K, V> for Empty<K, V> {
         InsertResult::Resize(value)
     }
 
-    fn expand(self: Box<Self>, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
+    fn expand(self, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
         //let mut leaf_linear = Box::new(LeafLinear::new());
         //leaf_linear.insert(key, value).success();
         //leaf_linear
