@@ -7,6 +7,9 @@ description = "Judy array implementation in pure Rust"
 documentation = "https://docs.rs/rudy"
 repository = "https://www.github.com/adevore/rudy/"
 homepage = "https://www.github.com/adevore/rudy/"
+keywords = ["data-structures", "collections", "judy"]
+categories = ["data-structures"]
+readme = "README.md"
 
 [dependencies]
 nodrop = "0.1"
