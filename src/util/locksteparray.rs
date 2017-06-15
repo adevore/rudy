@@ -212,6 +212,20 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
         self.len.as_usize()
     }
 
+    pub fn get(&self, index: usize) -> Option<(&A1::Item, &A2::Item)> {
+        if index >= self.len.as_usize() {
+            None
+        } else {
+            let item1 = unsafe {
+                &*self.array1.as_ptr().offset(index as isize)
+            };
+            let item2 = unsafe {
+                &*self.array2.as_ptr().offset(index as isize)
+            };
+            Some((item1, item2))
+        }
+    }
+
     pub fn array1(&self) -> &[A1::Item] {
         unsafe {
             let ptr = self.array1.as_ptr();
