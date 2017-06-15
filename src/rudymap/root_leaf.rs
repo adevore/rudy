@@ -1,10 +1,11 @@
 use std::marker::PhantomData;
 use std::mem;
+use std::ptr;
 use util::locksteparray;
 use util::SliceExt;
 use super::jpm::jpm_root::Jpm;
 use ::Key;
-use ::rudymap::results::InsertResult;
+use ::rudymap::results::{InsertResult, RemoveResult};
 use std::iter;
 use super::rootptr::RootPtr;
 
@@ -13,6 +14,8 @@ pub trait RootLeaf<K: Key, V> {
     fn get_mut(&mut self, key: K) -> Option<&mut V>;
     fn insert(&mut self, key: K, value: V) -> InsertResult<V>;
     fn expand(self, key: K, value: V) -> RootPtr<K, V>;
+    fn remove(&mut self, key: K) -> RemoveResult<V>;
+    fn shrink_remove(self, key: K) -> (RootPtr<K, V>, V);
     fn len(&self) -> usize;
 }
 
@@ -35,6 +38,14 @@ impl<K: Key, V> RootLeaf<K, V> for Empty<K, V> {
 
     fn insert(&mut self, key: K, value: V) -> InsertResult<V> {
         InsertResult::Resize(value)
+    }
+
+    fn remove(&mut self, key: K) -> RemoveResult<V> {
+        RemoveResult::Success(None)
+    }
+
+    fn shrink_remove(self, key: K) -> (RootPtr<K, V>, V){
+        unreachable!();
     }
 
     fn expand(self, key: K, value: V) -> RootPtr<K, V> {
@@ -109,6 +120,21 @@ impl<K: Key, V> RootLeaf<K, V> for Leaf1<K, V> {
         Box::new(Leaf2::new(self.key, self.value, key, value)).into()
     }
 
+    fn remove(&mut self, key: K) -> RemoveResult<V> {
+        if self.key == key {
+            RemoveResult::Downsize
+        } else {
+            RemoveResult::Success(None)
+        }
+    }
+
+    fn shrink_remove(self, key: K) -> (RootPtr<K, V>, V) {
+        let Leaf1 { key: node_key, value } = self;
+        let ptr = RootPtr::empty();
+        debug_assert_eq!(node_key, key);
+        (ptr, value)
+    }
+
     fn len(&self) -> usize {
         1
     }
@@ -165,6 +191,36 @@ impl<K: Key, V> RootLeaf<K, V> for Leaf2<K, V> {
         let mut leaf = Box::new(VecLeaf::from_arrays(keys, values));
         leaf.insert(key, value).success();
         leaf.into()
+    }
+
+    fn remove(&mut self, key: K) -> RemoveResult<V> {
+        let occupied = self.keys.iter()
+            .find(|&&k| k == key)
+            .is_some();
+        if occupied {
+            RemoveResult::Downsize
+        } else {
+            RemoveResult::Success(None)
+        }
+    }
+
+    fn shrink_remove(self, key: K) -> (RootPtr<K, V>, V) {
+        let Leaf2 { keys, mut values } = self;
+        let [key1, key2] = keys;
+        let value1;
+        let value2;
+        unsafe {
+            value1 = ptr::read(&mut values[0]);
+            value2 = ptr::read(&mut values[1]);
+            mem::forget(values);
+        }
+        if key1 == key {
+            let ptr = Box::new(Leaf1::new(key2, value2)).into();
+            (ptr, value1)
+        } else {
+            let ptr = Box::new(Leaf1::new(key1, value1)).into();
+            (ptr, value2)
+        }
     }
 
     fn len(&self) -> usize {
@@ -238,6 +294,19 @@ impl<K: Key, V> RootLeaf<K, V> for VecLeaf<K, V> {
         let mut jpm: Jpm<K, V> = self.into_iter().collect();
         jpm.insert(key, value).success();
         Box::new(jpm).into()
+    }
+
+    fn remove(&mut self, key: K) -> RemoveResult<V> {
+        let evicted = self.array.array1_mut()
+            .iter()
+            .position(|&k| k == key)
+            .and_then(|index| self.array.remove(index))
+            .map(|(_, value)| value);
+        RemoveResult::Success(evicted)
+    }
+
+    fn shrink_remove(self, key: K) -> (RootPtr<K, V>, V) {
+        unreachable!()
     }
 
     fn len(&self) -> usize {

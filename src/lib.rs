@@ -3,6 +3,7 @@
 #![allow(unused_variables)]
 #![feature(conservative_impl_trait)]
 #![feature(associated_consts)]
+#![feature(slice_patterns)]
 
 extern crate nodrop;
 extern crate num_traits;

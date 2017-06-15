@@ -3,7 +3,7 @@ use super::root_leaf::{RootLeaf, Empty, Leaf1, Leaf2, VecLeaf};
 use super::jpm::Jpm;
 use ::Key;
 use std::marker::PhantomData;
-use super::results::InsertResult;
+use super::results::{InsertResult, RemoveResult};
 
 fn into_raw<T>(node: Box<T>) -> *mut () {
     Box::into_raw(node) as *mut ()
@@ -187,6 +187,34 @@ macro_rules! impl_root_ptr_dispatch {
                     $(
                         RootOwned::$type_name(node) => {
                             node.expand(key, value)
+                        },
+                    )*
+                }
+            }
+
+            pub fn remove(&mut self, key: K) -> Option<V> {
+                let result = match self.as_mut() {
+                    $(
+                        RootMut::$type_name(mut node) => node.remove(key),
+                    )*
+                };
+                match result {
+                    RemoveResult::Success(evicted) => {
+                        evicted
+                    },
+                    RemoveResult::Downsize => {
+                        let (ptr, value) = self.take().shrink_remove(key);
+                        *self = ptr;
+                        Some(value)
+                    }
+                }
+            }
+
+            pub fn shrink_remove(self, key: K) -> (RootPtr<K, V>, V) {
+                match self.into_owned() {
+                    $(
+                        RootOwned::$type_name(node) => {
+                            node.shrink_remove(key)
                         },
                     )*
                 }

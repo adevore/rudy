@@ -2,7 +2,7 @@ use std::iter::FromIterator;
 use rudymap::root_leaf::RootLeaf;
 use super::innerptr::InnerPtr;
 use super::traits::JpmNode;
-use ::rudymap::results::InsertResult;
+use ::rudymap::results::{InsertResult, RemoveResult};
 use ::rudymap::rootptr::RootPtr;
 use ::Key;
 
@@ -39,6 +39,14 @@ impl<K: Key, V> RootLeaf<K, V> for Jpm<K, V> {
     fn expand(mut self, key: K, value: V) -> RootPtr<K, V> {
         self.insert(key, value).success();
         Box::new(self).into()
+    }
+
+    fn remove(&mut self, key: K) -> RemoveResult<V> {
+        unimplemented!();
+    }
+
+    fn shrink_remove(self, key: K) -> (RootPtr<K, V>, V) {
+        unimplemented!();
     }
 
     fn len(&self) -> usize {

@@ -21,11 +21,9 @@ impl<K: Key, V> RudyMap<K, V> {
         self.root.insert(key, value)
     }
 
-    /*
-    fn remove(&mut self, key: K) -> Option<V> {
+    pub fn remove(&mut self, key: K) -> Option<V> {
         self.root.remove(key)
     }
-    */
 
     /*
     fn clear(&mut self) {
