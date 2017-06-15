@@ -1,4 +1,6 @@
-pub trait Key: Copy + PartialEq + Ord + Default {
+use std::fmt::Debug;
+
+pub trait Key: Copy + PartialEq + Ord + Default + Debug {
     type Bytes: AsRef<[u8]>;
     const SIZE: usize;
     fn into_bytes(self) -> Self::Bytes;
