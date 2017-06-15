@@ -8,6 +8,7 @@ use nodrop::NoDrop;
 
 use num_traits::{Unsigned, Zero, One};
 
+#[derive(Debug)]
 pub struct OverflowError<T1, T2>(pub T1, pub T2);
 
 #[derive(Debug)]
@@ -189,14 +190,14 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
                 item1 = ptr::read(src1);
                 // Shift down array 1 down by 1
                 // Is self.len - index correct?
-                ptr::copy(src1.offset(1), src1, self.len.as_usize() - index);
+                ptr::copy(src1.offset(1), src1, self.len.as_usize() - index - 1);
                 // Calculate item 1's pointer
                 let src2 = self.array2.as_mut_ptr().offset(index as isize);
                 // Move item 1 out of the pointer
                 item2 = ptr::read(src2);
                 // Shift down array 1 down by 1
                 // Is self.len - index correct?
-                ptr::copy(src2, src2.offset(1), self.len.as_usize() - index);
+                ptr::copy(src2.offset(1), src2, self.len.as_usize() - index - 1);
                 // Update length
                 self.len -= One::one();
             }
@@ -317,4 +318,16 @@ fn test_into_iter() {
     assert_eq!(iter.next(), Some((4, 5)));
     assert_eq!(iter.next(), Some((3, 4)));
     assert_eq!(iter.next(), None);
+}
+
+#[test]
+fn test_remove() {
+    let mut locksteparray = LockstepArray::<[u8; 7], [u8; 7]>::new();
+    locksteparray.push(1, 2).unwrap();
+    locksteparray.push(3, 4).unwrap();
+    locksteparray.remove(0);
+    assert_eq!(locksteparray.get(0), Some((&3, &4)));
+    locksteparray.push(5, 6).unwrap();
+    locksteparray.remove(1);
+    assert_eq!(locksteparray.get(0), Some((&3, &4)));
 }
