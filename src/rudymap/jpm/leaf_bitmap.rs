@@ -9,7 +9,7 @@ use std::mem;
 use std::ptr;
 use super::traits::JpmNode;
 use super::innerptr::InnerPtr;
-use ::rudymap::results::InsertResult;
+use ::rudymap::results::{InsertResult, RemoveResult};
 use ::Key;
 use nodrop::NoDrop;
 
@@ -80,5 +80,23 @@ impl<K: Key, V> JpmNode<K, V> for LeafBitmap<K, V> {
 
     fn expand(self, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
         unreachable!();
+    }
+
+    fn remove(&mut self, key: &[u8]) -> RemoveResult<V> {
+        match singleton_index(key, &self.keys) {
+            Place::Occupied(index) => {
+                let place = &mut self.values[index];
+                let value = unsafe { ptr::read(place) };
+                self.keys[index / 8] &= !(1 << (index % 8));
+                RemoveResult::Success(Some(value))
+            },
+            Place::Empty(_) => {
+                RemoveResult::Success(None)
+            }
+        }
+    }
+
+    fn shrink_remove(self, pop: usize, key: &[u8]) -> (InnerPtr<K, V>, V) {
+        unreachable!()
     }
 }

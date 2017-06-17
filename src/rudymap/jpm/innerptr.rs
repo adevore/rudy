@@ -5,7 +5,7 @@ use super::branch_uncompressed::BranchUncompressed;
 use super::leaf_linear::LeafLinear;
 use super::leaf_bitmap::LeafBitmap;
 use super::traits::JpmNode;
-use ::rudymap::results::InsertResult;
+use ::rudymap::results::{InsertResult, RemoveResult};
 use ::util::{partial_write, partial_read};
 use ::Key;
 
@@ -120,6 +120,35 @@ macro_rules! make_inner_ptr {
                         InnerPtr::$type(target, pop) => {
                             let new_pop = pop.as_usize() + 1;
                             target.expand(new_pop, key, value)
+                        },
+                    )*
+                }
+            }
+
+            pub fn remove(&mut self, key: &[u8]) -> Option<V> {
+                let remove_result = match self.as_mut() {
+                    $(
+                        Mut::$type(target) => {
+                            target.remove(key)
+                        },
+                    )*
+                };
+                match remove_result {
+                    RemoveResult::Success(evicted) => evicted,
+                    RemoveResult::Downsize => {
+                        let (ptr, value) = self.take().shrink_remove(key);
+                        *self = ptr;
+                        Some(value)
+                    }
+                }
+            }
+
+            fn shrink_remove(self, key: &[u8]) -> (InnerPtr<K, V>, V) {
+                match self {
+                    $(
+                        InnerPtr::$type(target, pop) => {
+                            let new_pop = pop.as_usize() - 1;
+                            target.shrink_remove(new_pop, key)
                         },
                     )*
                 }

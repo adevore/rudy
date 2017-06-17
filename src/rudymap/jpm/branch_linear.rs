@@ -4,7 +4,7 @@ use ::util::SliceExt;
 use super::innerptr::{InnerPtr, IntoPtr};
 use ::Key;
 use super::traits::JpmNode;
-use ::rudymap::results::InsertResult;
+use ::rudymap::results::{InsertResult, RemoveResult};
 use super::branch_bitmap::BranchBitmap;
 use std::iter::FromIterator;
 
@@ -68,6 +68,24 @@ impl<K: Key, V> JpmNode<K, V> for BranchLinear<K, V> {
         branch.insert(key, value).success();
         IntoPtr::into_ptr(Box::new(branch), pop)
     }
+
+    fn remove(&mut self, key: &[u8]) -> RemoveResult<V> {
+        let (&byte, subkey) = key.split_first().unwrap();
+        match self.array.array1().linear_search(&byte) {
+            Ok(found) => {
+                    RemoveResult::Success(
+                        self.array.array2_mut()[found].remove(subkey))
+                },
+            Err(insert) => {
+                RemoveResult::Success(None)
+            }
+        }
+    }
+
+    fn shrink_remove(self, pop: usize, key: &[u8]) -> (InnerPtr<K, V>, V) {
+        unreachable!()
+    }
+
 }
 
 impl<K: Key, V> FromIterator<(u8, InnerPtr<K, V>)> for BranchLinear<K, V> {

@@ -4,7 +4,7 @@ use std::ptr;
 use super::innerptr::InnerPtr;
 use super::traits::JpmNode;
 use ::Key;
-use ::rudymap::results::InsertResult;
+use ::rudymap::results::{InsertResult, RemoveResult};
 
 pub struct BranchUncompressed<K: Key, V> {
     array: [InnerPtr<K, V>; 256]
@@ -44,4 +44,15 @@ impl<K: Key, V> JpmNode<K, V> for BranchUncompressed<K, V> {
     fn expand(self, population: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
         unreachable!()
     }
+
+    fn remove(&mut self, key: &[u8]) -> RemoveResult<V> {
+        let (&byte, subkey) = key.split_first().unwrap();
+        let evicted = self.array[byte as usize].remove(subkey);
+        RemoveResult::Success(evicted)
+    }
+
+    fn shrink_remove(self, pop: usize, key: &[u8]) -> (InnerPtr<K, V>, V) {
+        unreachable!()
+    }
+
 }

@@ -5,7 +5,7 @@ use ::Key;
 use super::leaf_bitmap::LeafBitmap;
 use super::branch_uncompressed::BranchUncompressed;
 use super::branch_linear::BranchLinear;
-use ::rudymap::results::InsertResult;
+use ::rudymap::results::{InsertResult, RemoveResult};
 
 use std::marker::PhantomData;
 
@@ -48,5 +48,13 @@ impl<K: Key, V> JpmNode<K, V> for Empty<K, V> {
             branch.insert(key, value).success();
             IntoPtr::into_ptr(branch, pop)
         }
+    }
+
+    fn remove(&mut self, key: &[u8]) -> RemoveResult<V> {
+        RemoveResult::Success(None)
+    }
+
+    fn shrink_remove(self, pop: usize, key: &[u8]) -> (InnerPtr<K, V>, V) {
+        unreachable!();
     }
 }

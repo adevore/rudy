@@ -1,7 +1,7 @@
 use ::Key;
 use super::innerptr::{InnerPtr, IntoPtr};
 use super::traits::JpmNode;
-use ::rudymap::results::InsertResult;
+use ::rudymap::results::{InsertResult, RemoveResult};
 use super::branch_uncompressed::BranchUncompressed;
 use std::iter::FromIterator;
 
@@ -62,6 +62,16 @@ impl<K: Key, V> Subexpanse<K, V> {
         self.ptr.as_mut().unwrap()[sub_byte as usize] = ptr;
         self.bitmap |= 1 << sub_byte as u32;
     }
+
+    pub fn remove(&mut self, sub_byte: u8, subkey: &[u8]) -> RemoveResult<V> {
+        if self.ptr.is_none() {
+            self.ptr = Some(Default::default());
+        }
+        let evicted = self.ptr.as_mut()
+            .unwrap()[sub_byte as usize]
+            .remove(subkey);
+        RemoveResult::Success(evicted)
+    }
 }
 
 pub struct BranchBitmap<K: Key, V> {
@@ -90,6 +100,14 @@ impl<K: Key, V> JpmNode<K, V> for BranchBitmap<K, V> {
         self.subexpanses[byte as usize / 32].insert(byte % 32, subkey, value)
     }
     fn expand(self, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
+        unreachable!()
+    }
+    fn remove(&mut self, key: &[u8]) -> RemoveResult<V> {
+        let (&byte, subkey) = key.split_first().unwrap();
+        self.subexpanses[byte as usize / 32].remove(byte % 32, subkey)
+    }
+
+    fn shrink_remove(self, pop: usize, key: &[u8]) -> (InnerPtr<K, V>, V) {
         unreachable!()
     }
 }

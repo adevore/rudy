@@ -42,7 +42,8 @@ impl<K: Key, V> RootLeaf<K, V> for Jpm<K, V> {
     }
 
     fn remove(&mut self, key: K) -> RemoveResult<V> {
-        unimplemented!();
+        let bytes = key.into_bytes();
+        RemoveResult::Success(self.head.remove(bytes.as_ref()))
     }
 
     fn shrink_remove(self, key: K) -> (RootPtr<K, V>, V) {

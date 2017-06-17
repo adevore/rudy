@@ -1,6 +1,6 @@
 use super::traits::JpmNode;
 use super::innerptr::InnerPtr;
-use ::rudymap::results::InsertResult;
+use ::rudymap::results::{InsertResult, RemoveResult};
 use ::Key;
 use super::leaf_bitmap::LeafBitmap;
 use std::marker::PhantomData;
@@ -40,5 +40,13 @@ impl<K: Key, V> JpmNode<K, V> for LeafLinear<K, V> {
 
     fn expand(self, pop: usize, key: &[u8], value: V) -> InnerPtr<K, V> {
         unimplemented!();
+    }
+
+    fn remove(&mut self, key: &[u8]) -> RemoveResult<V> {
+        unimplemented!();
+    }
+
+    fn shrink_remove(self, pop: usize, key: &[u8]) -> (InnerPtr<K, V>, V) {
+        unreachable!()
     }
 }
