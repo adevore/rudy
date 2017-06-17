@@ -14,3 +14,4 @@ readme = "README.md"
 [dependencies]
 nodrop = "0.1"
 num-traits = "0.1"
+smallvec = "0.4"

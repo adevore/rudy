@@ -4,6 +4,7 @@ use super::jpm::Jpm;
 use ::Key;
 use std::marker::PhantomData;
 use super::results::{InsertResult, RemoveResult};
+use ::rudymap::iter::IterState;
 
 fn into_raw<T>(node: Box<T>) -> *mut () {
     Box::into_raw(node) as *mut ()
@@ -216,6 +217,14 @@ macro_rules! impl_root_ptr_dispatch {
                         RootOwned::$type_name(node) => {
                             node.shrink_remove(key)
                         },
+                    )*
+                }
+            }
+
+            pub fn iter_state(&self) -> IterState<K, V> {
+                match self.as_ref() {
+                    $(
+                        RootRef::$type_name(node) => node.iter_state(),
                     )*
                 }
             }
