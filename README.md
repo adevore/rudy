@@ -35,7 +35,7 @@ types and the usage of larger types, with possible impact to performance.
     - [x] Uncompressed Branch
 - [x] Insertion
 - [x] Get
-- [ ] Remove
+- [x] Remove
 - [ ] Memory used
 - [ ] Shrink
 - [ ] Iterators
