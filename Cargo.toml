@@ -14,3 +14,10 @@ readme = "README.md"
 [dependencies]
 nodrop = "0.1"
 num-traits = "0.1"
+
+[dev-dependencies]
+bencher = "0.1"
+
+[[bench]]
+name = "hashmap"
+harness = false
