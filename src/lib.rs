@@ -12,7 +12,7 @@ mod util;
 pub mod rudymap;
 mod key;
 
-use key::Key;
+pub use key::Key;
 //mod rudyset;
 
 //pub use rudyset::RudySet;
