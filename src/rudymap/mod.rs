@@ -2,6 +2,7 @@ mod root_leaf;
 mod rootptr;
 mod jpm;
 mod results;
+mod iter;
 
 use ::Key;
 use self::rootptr::RootPtr;

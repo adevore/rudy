@@ -7,6 +7,7 @@
 
 extern crate nodrop;
 extern crate num_traits;
+extern crate smallvec;
 
 mod util;
 pub mod rudymap;
