@@ -86,3 +86,16 @@ fn test_insert_get_2() {
     assert_eq!(map.get(0), Some(&10));
     assert_eq!(map.get(1), Some(&20));
 }
+
+/// Test insertion to a map size that exercises the JPM
+#[test]
+fn test_insert_signed() {
+    let mut map = RudyMap::<i32, i32>::new();
+    for k in 0..100 {
+        map.insert(k, k + 2);
+    }
+
+    for k in 0..100 {
+        assert_eq!(map.get(k), Some(&(k + 2)));
+    }
+}
