@@ -22,7 +22,7 @@ pub unsafe trait Array {
     type Index: Index;
     fn as_ptr(&self) -> *const Self::Item;
     fn as_mut_ptr(&mut self) -> *mut Self::Item;
-    fn capacity(&self) -> usize;
+    fn capacity() -> usize;
 }
 
 pub trait Index : Unsigned + ops::AddAssign + ops::SubAssign + Copy {
@@ -50,37 +50,31 @@ impl_index!(u32);
 impl_index!(usize);
 
 macro_rules! impl_array {
-    ($index_type:ty, $len:expr ) => (
-        unsafe impl<T> Array for [T; $len] {
-            type Item = T;
-            type Index = $index_type;
-            #[inline(always)]
-            fn as_ptr(&self) -> *const T {
-                self as *const _ as *const _
-            }
+    ($index_type:ty => $($len:expr),+ $(,)*) => (
+        $(
+            unsafe impl<T> Array for [T; $len] {
+                type Item = T;
+                type Index = $index_type;
+                #[inline(always)]
+                fn as_ptr(&self) -> *const T {
+                    self as *const _ as *const _
+                }
 
-            #[inline(always)]
-            fn as_mut_ptr(&mut self) -> *mut T {
-                self as *mut _ as *mut _
-            }
+                #[inline(always)]
+                fn as_mut_ptr(&mut self) -> *mut T {
+                    self as *mut _ as *mut _
+                }
 
-            #[inline(always)]
-            fn capacity(&self) -> usize {
-                $len
+                #[inline(always)]
+                fn capacity() -> usize {
+                    $len
+                }
             }
-        }
+        )*
     )
 }
 
-macro_rules! impl_array_many {
-    ($index_type:ty, $($len:expr),+) => (
-        $(
-            impl_array!($index_type, $len);
-        )*
-    );
-}
-
-impl_array_many!(u8, 1, 2, 7, 31, 256);
+impl_array!(u8 => 1, 2, 7, 31, 256);
 
 pub struct LockstepArray<A1: Array, A2: Array> {
     len: A1::Index,
@@ -90,6 +84,8 @@ pub struct LockstepArray<A1: Array, A2: Array> {
 
 impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
     pub fn new() -> LockstepArray<A1, A2> {
+        // TODO: Eventually these will be encoded into the type system
+        assert_eq!(A1::capacity(), A2::capacity());
         LockstepArray {
             len: Zero::zero(),
             array1: NoDrop::new(unsafe {mem::uninitialized()}),
@@ -100,19 +96,19 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
     pub fn from_arrays<B1, B2>(array1: B1, array2: B2) -> LockstepArray<A1, A2>
         where B1: Array<Item=A1::Item>, B2: Array<Item=A2::Item> {
         let mut lockstep = LockstepArray::<A1, A2>::new();
-        // Eventually these will be encoded into the type system
-        assert!(array1.capacity() <= lockstep.array1.capacity());
-        assert!(array2.capacity() <= lockstep.array2.capacity());
-        assert_eq!(array1.capacity(), array2.capacity());
-        let len = A1::Index::from_usize(array1.capacity());
+        // TODO: Eventually these will be encoded into the type system
+        assert!(B1::capacity() <= A1::capacity());
+        assert!(B2::capacity() <= A2::capacity());
+        assert_eq!(A1::capacity(), A2::capacity());
+        let len = A1::Index::from_usize(A1::capacity());
         unsafe {
             ptr::copy_nonoverlapping(array1.as_ptr(),
                                      lockstep.array1.as_mut_ptr(),
-                                     array1.capacity());
+                                     A1::capacity());
             mem::forget(array1);
             ptr::copy_nonoverlapping(array2.as_ptr(),
                                      lockstep.array2.as_mut_ptr(),
-                                     array2.capacity());
+                                     A1::capacity());
             mem::forget(array2);
         }
         lockstep.len = len;
@@ -121,7 +117,7 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
 
     pub fn push(&mut self, item1: A1::Item, item2: A2::Item)
                 -> Result<(), OverflowError<A1::Item, A2::Item>> {
-        if self.len.as_usize() == self.array1.capacity() {
+        if self.len.as_usize() == A1::capacity() {
             return Err(OverflowError(item1, item2));
         }
         unsafe {
@@ -144,10 +140,10 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
                     .offset(self.len.as_usize() as isize);
                 // Move item 1 out of the pointer
                 let item1 = ptr::read(src1);
-                // Calculate item 1's pointer
+                // Calculate item 2's pointer
                 let src2 = self.array2.as_mut_ptr()
                     .offset(self.len.as_usize() as isize);
-                // Move item 1 out of the pointer
+                // Move item 2 out of the pointer
                 let item2 = ptr::read(src2);
                 // Update length
                 self.len -= One::one();
@@ -160,7 +156,7 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
                   -> Result<(), InsertError<A1::Item, A2::Item>> {
         if index > self.len.as_usize() {
             Err(InsertError::OutOfBounds(item1, item2))
-        } else if self.len.as_usize() == self.array1.capacity() {
+        } else if self.len.as_usize() == A1::capacity() {
             Err(InsertError::Overflow(item1, item2))
         } else {
             unsafe {
@@ -189,14 +185,12 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
                 // Move item 1 out of the pointer
                 item1 = ptr::read(src1);
                 // Shift down array 1 down by 1
-                // Is self.len - index correct?
                 ptr::copy(src1.offset(1), src1, self.len.as_usize() - index - 1);
-                // Calculate item 1's pointer
+                // Calculate item 2's pointer
                 let src2 = self.array2.as_mut_ptr().offset(index as isize);
-                // Move item 1 out of the pointer
+                // Move item 2 out of the pointer
                 item2 = ptr::read(src2);
-                // Shift down array 1 down by 1
-                // Is self.len - index correct?
+                // Shift down array 2 down by 1
                 ptr::copy(src2.offset(1), src2, self.len.as_usize() - index - 1);
                 // Update length
                 self.len -= One::one();
@@ -206,7 +200,7 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.len != Zero::zero()
+        self.len == Zero::zero()
     }
 
     pub fn len(&self) -> usize {
@@ -260,7 +254,7 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
     }
 
     pub fn capacity(&self) -> usize {
-        self.array1.capacity()
+        A1::capacity()
     }
 }
 
@@ -330,4 +324,27 @@ fn test_remove() {
     locksteparray.push(5, 6).unwrap();
     locksteparray.remove(1);
     assert_eq!(locksteparray.get(0), Some((&3, &4)));
+}
+
+#[test]
+fn test_length() {
+    let mut locksteparray = LockstepArray::<[u8; 7], [u8; 7]>::new();
+    assert_eq!(locksteparray.len(), 0);
+    assert!(locksteparray.is_empty());
+    locksteparray.insert(0, 4, 5).unwrap();
+    assert_eq!(locksteparray.len(), 1);
+    locksteparray.insert(1, 3, 4).unwrap();
+    assert_eq!(locksteparray.len(), 2);
+    locksteparray.pop();
+    assert_eq!(locksteparray.len(), 1);
+    locksteparray.pop();
+    assert_eq!(locksteparray.len(), 0);
+    assert!(locksteparray.is_empty());
+}
+
+// TODO: Remove when this is detected at compile time.
+#[test]
+#[should_panic]
+fn test_different_sized_arrays() {
+    let _ = LockstepArray::<[u8; 2], [u8; 7]>::new();
 }
