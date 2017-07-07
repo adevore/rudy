@@ -194,21 +194,15 @@ impl<K: Key, V> RootLeaf<K, V> for Leaf2<K, V> {
     }
 
     fn remove(&mut self, key: K) -> RemoveResult<V> {
-        let occupied = self.keys.iter()
+        self.keys.iter()
             .find(|&&k| k == key)
-            .is_some();
-        if occupied {
-            RemoveResult::Downsize
-        } else {
-            RemoveResult::Success(None)
-        }
+            .map(|_| RemoveResult::Downsize)
+            .unwrap_or(RemoveResult::Success(None))
     }
 
     fn shrink_remove(self, key: K) -> (RootPtr<K, V>, V) {
-        let Leaf2 { keys, mut values } = self;
-        let [key1, key2] = keys;
-        let value1;
-        let value2;
+        let Leaf2 { keys: [key1, key2], mut values } = self;
+        let (value1, value2);
         unsafe {
             value1 = ptr::read(&mut values[0]);
             value2 = ptr::read(&mut values[1]);
