@@ -43,25 +43,39 @@ macro_rules! impl_root_ptr {
             )*
         }
 
+        const TYPE_CODE_EMPTY: usize = 1;
+        // TODO: Because `next_power_of_two` isn't const function this cannot be constant.
+        macro_rules! TYPE_CODE_MASK {
+            () => {
+                ($($type_code | )+ TYPE_CODE_EMPTY).next_power_of_two() - 1
+            }
+        }
+
         impl<K: Key, V> RootPtr<K, V> {
             unsafe fn new(ptr: *mut(), type_code: usize) -> RootPtr<K, V> {
-                debug_assert_eq!(ptr as usize & 0b111, 0,
+                debug_assert!(type_code <= TYPE_CODE_MASK!(),
+                              "Type code was larger than largest allowed value: {:?} > {:?}",
+                              type_code, TYPE_CODE_MASK!());
+                debug_assert_eq!(ptr as usize & TYPE_CODE_MASK!(), 0,
                               "Low bits of root ptr {:?} are set", ptr);
+                let encoded = ptr as usize | type_code;
+                debug_assert!(encoded != 0,
+                              "Encoded root ptr was a zero");
                 RootPtr {
-                    word: NonZeroUsize::new(ptr as usize | type_code),
+                    word: NonZeroUsize::new(encoded),
                     phantomdata: PhantomData
                 }
             }
 
             pub fn empty() -> RootPtr<K, V> {
                 unsafe {
-                    Self::new(ptr::null_mut(), 0)
+                    Self::new(ptr::null_mut(), TYPE_CODE_EMPTY)
                 }
             }
 
             pub fn as_ref(&self) -> RootRef<K, V> {
                 match self.type_code() {
-                    0 => RootRef::Empty(Empty::new()),
+                    TYPE_CODE_EMPTY => RootRef::Empty(Empty::new()),
                     $(
                         $type_code => RootRef::$type_name(
                             unsafe { &*(self.ptr() as *const $type_name<K, V>) }
@@ -73,7 +87,7 @@ macro_rules! impl_root_ptr {
 
             pub fn as_mut(&mut self) -> RootMut<K, V> {
                 match self.type_code() {
-                    0 => RootMut::Empty(Empty::new()),
+                    TYPE_CODE_EMPTY => RootMut::Empty(Empty::new()),
                     $(
                         $type_code => RootMut::$type_name(
                             unsafe { &mut *(self.ptr() as *mut $type_name<K, V>) }
@@ -88,7 +102,7 @@ macro_rules! impl_root_ptr {
                 let type_code = self.type_code();
                 ::std::mem::forget(self);
                 match type_code {
-                    0 => RootOwned::Empty(Box::new(Empty::new())),
+                    TYPE_CODE_EMPTY => RootOwned::Empty(Box::new(Empty::new())),
                     $(
                         $type_code => RootOwned::$type_name(
                             unsafe {
@@ -119,15 +133,15 @@ macro_rules! impl_root_ptr {
             }
 
             fn type_code(&self) -> usize {
-                self.word.get() & 0b111
+                self.word.get() & TYPE_CODE_MASK!()
             }
 
             fn ptr(&self) -> *const () {
-                (self.word.get() & !0b111) as *const ()
+                (self.word.get() & !TYPE_CODE_MASK!()) as *const ()
             }
 
             fn ptr_mut(&self) -> *mut () {
-                (self.word.get() & !0b111) as *mut ()
+                (self.word.get() & !TYPE_CODE_MASK!()) as *mut ()
             }
         }
 
@@ -150,7 +164,7 @@ macro_rules! impl_root_ptr {
 
         impl_root_ptr_dispatch!(
             $($type_code => $type_name,)*
-            0 => Empty
+            TYPE_CODE_EMPTY => Empty
         );
     }
 }
@@ -229,8 +243,8 @@ macro_rules! impl_root_ptr_dispatch {
 }
 
 impl_root_ptr!(
-    1 => Leaf1,
-    2 => Leaf2,
-    3 => VecLeaf,
-    4 => Jpm
+    2 => Leaf1,
+    3 => Leaf2,
+    4 => VecLeaf,
+    5 => Jpm
 );
