@@ -4,6 +4,7 @@ use super::jpm::Jpm;
 use ::Key;
 use std::marker::PhantomData;
 use super::results::{InsertResult, RemoveResult};
+use util::NonZeroUsize;
 
 fn into_raw<T>(node: Box<T>) -> *mut () {
     Box::into_raw(node) as *mut ()
@@ -16,8 +17,8 @@ unsafe fn from_raw<T>(ptr: *mut ()) -> Box<T> {
 macro_rules! impl_root_ptr {
     ($($type_code:expr => $type_name:ident),+) => {
         pub struct RootPtr<K: Key, V> {
-            // TODO: If NonZero stabilizes, adapt this to be non-zero when empty
-            word: usize,
+            // TODO: Replace with `NonZero` when and if it stabilizes: rust-lang/rust#27730
+            word: NonZeroUsize,
             phantomdata: PhantomData<(K, V)>
         }
 
@@ -47,7 +48,7 @@ macro_rules! impl_root_ptr {
                 debug_assert_eq!(ptr as usize & 0b111, 0,
                               "Low bits of root ptr {:?} are set", ptr);
                 RootPtr {
-                    word: ptr as usize | type_code,
+                    word: NonZeroUsize::new(ptr as usize | type_code),
                     phantomdata: PhantomData
                 }
             }
@@ -118,15 +119,15 @@ macro_rules! impl_root_ptr {
             }
 
             fn type_code(&self) -> usize {
-                self.word & 0b111
+                self.word.get() & 0b111
             }
 
             fn ptr(&self) -> *const () {
-                (self.word & !0b111) as *const ()
+                (self.word.get() & !0b111) as *const ()
             }
 
             fn ptr_mut(&self) -> *mut () {
-                (self.word & !0b111) as *mut ()
+                (self.word.get() & !0b111) as *mut ()
             }
         }
 

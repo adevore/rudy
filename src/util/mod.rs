@@ -3,6 +3,22 @@ use std::cmp::Ordering;
 
 pub mod locksteparray;
 
+// TODO: Replace with `NonZero` when and if it stabilizes: rust-lang/rust#27730
+#[derive(Copy, Clone)]
+pub struct NonZeroUsize(&'static ());
+
+impl NonZeroUsize {
+    #[inline]
+    pub unsafe fn new(value: usize) -> Self {
+        NonZeroUsize(&*(value as *const ()))
+    }
+
+    #[inline]
+    pub fn get(self) -> usize {
+        self.0 as *const () as usize
+    }
+}
+
 pub fn partial_read(array: &[u8]) -> usize {
     debug_assert!(array.len() <= size_of::<usize>());
     array.iter()
