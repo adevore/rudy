@@ -99,16 +99,16 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
         // TODO: Eventually these will be encoded into the type system
         assert!(B1::capacity() <= A1::capacity());
         assert!(B2::capacity() <= A2::capacity());
-        assert_eq!(A1::capacity(), A2::capacity());
-        let len = A1::Index::from_usize(A1::capacity());
+        assert_eq!(B1::capacity(), B2::capacity());
+        let len = A1::Index::from_usize(B1::capacity());
         unsafe {
             ptr::copy_nonoverlapping(array1.as_ptr(),
                                      lockstep.array1.as_mut_ptr(),
-                                     A1::capacity());
+                                     B1::capacity());
             mem::forget(array1);
             ptr::copy_nonoverlapping(array2.as_ptr(),
                                      lockstep.array2.as_mut_ptr(),
-                                     A1::capacity());
+                                     B2::capacity());
             mem::forget(array2);
         }
         lockstep.len = len;
