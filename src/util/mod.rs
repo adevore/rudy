@@ -10,6 +10,7 @@ pub struct NonZeroUsize(&'static ());
 impl NonZeroUsize {
     #[inline]
     pub unsafe fn new(value: usize) -> Self {
+        debug_assert!(value != 0, "usize was zero");
         NonZeroUsize(&*(value as *const ()))
     }
 

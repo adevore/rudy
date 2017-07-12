@@ -58,11 +58,8 @@ macro_rules! impl_root_ptr {
                               type_code, TYPE_CODE_MASK!());
                 debug_assert_eq!(ptr as usize & TYPE_CODE_MASK!(), 0,
                               "Low bits of root ptr {:?} are set", ptr);
-                let encoded = ptr as usize | type_code;
-                debug_assert!(encoded != 0,
-                              "Encoded root ptr was a zero");
                 RootPtr {
-                    word: NonZeroUsize::new(encoded),
+                    word: NonZeroUsize::new(ptr as usize | type_code),
                     phantomdata: PhantomData
                 }
             }
