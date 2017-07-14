@@ -137,12 +137,12 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
             unsafe {
                 // Calculate item 1's pointer
                 let src1 = self.array1.as_mut_ptr()
-                    .offset(self.len.as_usize() as isize);
+                    .offset(self.len.as_usize() as isize - 1);
                 // Move item 1 out of the pointer
                 let item1 = ptr::read(src1);
                 // Calculate item 2's pointer
                 let src2 = self.array2.as_mut_ptr()
-                    .offset(self.len.as_usize() as isize);
+                    .offset(self.len.as_usize() as isize - 1);
                 // Move item 2 out of the pointer
                 let item2 = ptr::read(src2);
                 // Update length
