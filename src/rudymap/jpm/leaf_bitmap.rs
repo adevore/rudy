@@ -118,14 +118,9 @@ impl<K: Key, V> JpmNode<K, V> for LeafBitmap<K, V> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::sync::atomic::{AtomicUsize,Ordering};
 
-    struct Droppable<'a>(&'a AtomicUsize);
-    impl<'a> Drop for Droppable<'a> {
-        fn drop(&mut self) {
-            self.0.fetch_add(1, Ordering::AcqRel);
-        }
-    }
+    use std::sync::atomic::{AtomicUsize,Ordering};
+    use util::test::Droppable;
 
     #[test]
     fn test_drop() {
