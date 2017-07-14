@@ -32,8 +32,13 @@ impl<K: Key, V> LeafBitmap<K, V> {
 impl<K: Key, V> Drop for LeafBitmap<K, V> {
     fn drop(&mut self) {
         for index in 0..256 {
-            let key: [u8; 1] = [index as u8];
-            self.remove(&key).success();
+            let occupied = self.keys[index / 8] & (1 << (index % 8));
+            if occupied != 0 {
+                let mut value = &mut self.values[index];
+                unsafe {
+                    ptr::drop_in_place(value as *mut V);
+                }
+            }
         }
     }
 }
