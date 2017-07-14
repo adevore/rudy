@@ -3,6 +3,9 @@ use std::cmp::Ordering;
 
 pub mod locksteparray;
 
+#[cfg(test)]
+pub mod test;
+
 // TODO: Replace with `NonZero` when and if it stabilizes: rust-lang/rust#27730
 #[derive(Copy, Clone)]
 pub struct NonZeroUsize(&'static ());
