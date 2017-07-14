@@ -33,10 +33,12 @@ pub trait Index : Unsigned + ops::AddAssign + ops::SubAssign + Copy {
 macro_rules! impl_index {
     ($index_type:ty) => (
         impl Index for $index_type {
+            #[inline(always)]
             fn as_usize(self) -> usize {
                 self as usize
             }
 
+            #[inline(always)]
             fn from_usize(value: usize) -> Self {
                 value as $index_type
             }
