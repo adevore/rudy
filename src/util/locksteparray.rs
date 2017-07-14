@@ -342,6 +342,45 @@ fn test_length() {
     assert!(locksteparray.is_empty());
 }
 
+#[test]
+fn test_drop() {
+    use std::sync::atomic::{AtomicUsize,Ordering};
+    use util::test::Droppable;
+
+    let drop_count = AtomicUsize::new(0);
+
+    {
+        let mut locksteparray = LockstepArray::<[u8; 7], [Droppable; 7]>::new();
+        assert_eq!(drop_count.load(Ordering::Acquire), 0);
+
+        // inserting should cause no drops
+        locksteparray.insert(0, 255, Droppable(&drop_count)).unwrap();
+        assert_eq!(locksteparray.len(), 1);
+        assert_eq!(drop_count.load(Ordering::Acquire), 0);
+
+        // inserting to a new index should not cause drops
+        locksteparray.insert(1, 255, Droppable(&drop_count)).unwrap();
+        assert_eq!(locksteparray.len(), 2);
+        assert_eq!(drop_count.load(Ordering::Acquire), 0);
+
+        // inserting to a used index should not cause a drop, since the array expands
+        locksteparray.insert(0, 255, Droppable(&drop_count)).unwrap();
+        assert_eq!(locksteparray.len(), 3);
+        assert_eq!(drop_count.load(Ordering::Acquire), 0);
+    }
+
+    // dropping should cause all items to drop
+    assert_eq!(drop_count.load(Ordering::Acquire), 3);
+
+    // TODO: overflow conditions
+    // TODO: removal
+}
+
+#[test]
+fn test_into_iter_drop() {
+    // TODO: IntoIter
+}
+
 // TODO: Remove when this is detected at compile time.
 #[test]
 #[should_panic]
