@@ -113,6 +113,10 @@ impl<K: Key, V> JpmNode<K, V> for LeafBitmap<K, V> {
     fn shrink_remove(self, pop: usize, key: &[u8]) -> (InnerPtr<K, V>, V) {
         unreachable!()
     }
+
+    fn memory_usage(&self) -> usize {
+        mem::size_of::<Self>()
+    }
 }
 
 #[cfg(test)]
@@ -166,5 +170,38 @@ mod test {
 
         // discarding the LeafBitmap should drop the others
         assert_eq!(drop_count.load(Ordering::Acquire), 256);
+    }
+
+    #[test]
+    fn test_memory_usage() {
+        // size should be 32 + nodrop flag + padding + 256*sizeof(V)
+        // nodrop flag + padding basically works out to an extra V, so 32 + 257*N
+        {
+            let lb: LeafBitmap<u32, u8> = LeafBitmap::new();
+            assert_eq!(lb.memory_usage(), 32 + 257*1);
+        }
+
+        {
+            let lb: LeafBitmap<u32, u16> = LeafBitmap::new();
+            assert_eq!(lb.memory_usage(), 32 + 257*2);
+        }
+
+        {
+            let lb: LeafBitmap<u32, u32> = LeafBitmap::new();
+            assert_eq!(lb.memory_usage(), 32 + 257*4);
+        }
+
+        {
+            let lb: LeafBitmap<u32, u64> = LeafBitmap::new();
+            assert_eq!(lb.memory_usage(), 32 + 257*8);
+        }
+
+        /*
+        // FIXME: why is this 34 instead of 32?
+        {
+            let lb: LeafBitmap<u32, ()> = LeafBitmap::new();
+            assert_eq!(lb.memory_usage(), 32);
+        }
+        */
     }
 }

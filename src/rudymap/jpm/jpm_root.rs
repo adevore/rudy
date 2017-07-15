@@ -1,4 +1,5 @@
 use std::iter::FromIterator;
+use std::mem;
 use rudymap::root_leaf::RootLeaf;
 use super::innerptr::InnerPtr;
 use super::traits::JpmNode;
@@ -52,6 +53,9 @@ impl<K: Key, V> RootLeaf<K, V> for Jpm<K, V> {
 
     fn len(&self) -> usize {
         self.len
+    }
+    fn memory_usage(&self) -> usize {
+        mem::size_of::<Self>() + self.head.memory_usage()
     }
 }
 

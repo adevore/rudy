@@ -8,6 +8,7 @@ use super::traits::JpmNode;
 use ::rudymap::results::{InsertResult, RemoveResult};
 use ::util::{partial_write, partial_read};
 use ::Key;
+use std::mem;
 
 #[cfg(target_pointer_width = "32")]
 pub struct Population {
@@ -156,6 +157,16 @@ macro_rules! make_inner_ptr {
 
             pub fn take(&mut self) -> InnerPtr<K, V> {
                 ::std::mem::replace(self, InnerPtr::default())
+            }
+
+            pub fn memory_usage(&self) -> usize {
+                match *self {
+                    $(
+                        InnerPtr::$type(ref target, ref pop) => {
+                            target.memory_usage() + mem::size_of_val(pop)
+                        },
+                    )*
+                }
             }
         }
 

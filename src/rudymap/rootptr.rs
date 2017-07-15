@@ -3,6 +3,7 @@ use super::root_leaf::{RootLeaf, Empty, Leaf1, Leaf2, VecLeaf};
 use super::jpm::Jpm;
 use ::Key;
 use std::marker::PhantomData;
+use std::mem;
 use super::results::{InsertResult, RemoveResult};
 use util::NonZeroUsize;
 
@@ -139,6 +140,15 @@ macro_rules! impl_root_ptr {
 
             fn ptr_mut(&self) -> *mut () {
                 (self.word.get() & !TYPE_CODE_MASK!()) as *mut ()
+            }
+
+            pub fn memory_usage(&self) -> usize {
+                match self.as_ref() {
+                    RootRef::Empty(_) => mem::size_of::<Self>(),
+                    $(
+                        RootRef::$type_name(node) => mem::size_of::<Self>() + node.memory_usage(),
+                    )*
+                }
             }
         }
 

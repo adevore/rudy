@@ -62,6 +62,10 @@ impl<K: Key, V> RudyMap<K, V> {
         IterMut::new(&mut self.root)
     }
     */
+
+    pub fn memory_usage(&self) -> usize {
+        self.root.memory_usage()
+    }
 }
 
 impl<K: Key, V> Default for RudyMap<K, V> {

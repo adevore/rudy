@@ -17,6 +17,7 @@ pub trait RootLeaf<K: Key, V> {
     fn remove(&mut self, key: K) -> RemoveResult<V>;
     fn shrink_remove(self, key: K) -> (RootPtr<K, V>, V);
     fn len(&self) -> usize;
+    fn memory_usage(&self) -> usize;
 }
 
 pub struct Empty<K: Key, V>(PhantomData<(K, V)>);
@@ -55,6 +56,8 @@ impl<K: Key, V> RootLeaf<K, V> for Empty<K, V> {
     fn len(&self) -> usize {
         0
     }
+
+    fn memory_usage(&self) -> usize { 0 }
 }
 
 impl<K: Key, V> Default for Empty<K, V> {
@@ -137,6 +140,10 @@ impl<K: Key, V> RootLeaf<K, V> for Leaf1<K, V> {
 
     fn len(&self) -> usize {
         1
+    }
+
+    fn memory_usage(&self) -> usize {
+        mem::size_of_val(self)
     }
 }
 
@@ -221,6 +228,9 @@ impl<K: Key, V> RootLeaf<K, V> for Leaf2<K, V> {
 
     fn len(&self) -> usize {
         2
+    }
+    fn memory_usage(&self) -> usize {
+        mem::size_of_val(self)
     }
 }
 
@@ -307,5 +317,8 @@ impl<K: Key, V> RootLeaf<K, V> for VecLeaf<K, V> {
 
     fn len(&self) -> usize {
         self.array.len()
+    }
+    fn memory_usage(&self) -> usize {
+        mem::size_of_val(self)
     }
 }

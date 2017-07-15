@@ -7,6 +7,7 @@ use super::traits::JpmNode;
 use ::rudymap::results::{InsertResult, RemoveResult};
 use super::branch_bitmap::BranchBitmap;
 use std::iter::FromIterator;
+use std::mem;
 
 pub struct BranchLinear<K: Key, V> {
     array: LockstepArray<[u8; 7], [InnerPtr<K, V>; 7]>
@@ -86,6 +87,13 @@ impl<K: Key, V> JpmNode<K, V> for BranchLinear<K, V> {
         unreachable!()
     }
 
+    fn memory_usage(&self) -> usize {
+        let mut bytes = mem::size_of::<Self>();
+        for jpm in self.array.array2().iter() {
+            bytes += jpm.memory_usage();
+        }
+        bytes
+    }
 }
 
 impl<K: Key, V> FromIterator<(u8, InnerPtr<K, V>)> for BranchLinear<K, V> {
