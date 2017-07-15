@@ -4,7 +4,7 @@ use super::rootptr::RootPtr;
 
 macro_rules! iter_state {
     ($($type:ident),+) => {
-        pub enum IterState<'a, K: Key, V> {
+        pub enum RootIterState<'a, K: Key, V> {
             $(
                 $type($type<'a, K, V>),
             )*
@@ -45,12 +45,9 @@ macro_rules! iter_state {
 }
 
 iter_state!(
+    EmptyState,
     Leaf1IterState,
     Leaf2IterState,
     VecIterState,
-    BranchBitmapIterState,
-    BranchLinearIterState,
-    BranchUncompressedIterState,
-    LeafBitmapIterState,
-    LeafLineaIterStater
+    JpmIterState
 );
