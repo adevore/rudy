@@ -33,10 +33,12 @@ pub trait Index : Unsigned + ops::AddAssign + ops::SubAssign + Copy {
 macro_rules! impl_index {
     ($index_type:ty) => (
         impl Index for $index_type {
+            #[inline(always)]
             fn as_usize(self) -> usize {
                 self as usize
             }
 
+            #[inline(always)]
             fn from_usize(value: usize) -> Self {
                 value as $index_type
             }
@@ -137,12 +139,12 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
             unsafe {
                 // Calculate item 1's pointer
                 let src1 = self.array1.as_mut_ptr()
-                    .offset(self.len.as_usize() as isize);
+                    .offset(self.len.as_usize() as isize - 1);
                 // Move item 1 out of the pointer
                 let item1 = ptr::read(src1);
                 // Calculate item 2's pointer
                 let src2 = self.array2.as_mut_ptr()
-                    .offset(self.len.as_usize() as isize);
+                    .offset(self.len.as_usize() as isize - 1);
                 // Move item 2 out of the pointer
                 let item2 = ptr::read(src2);
                 // Update length
@@ -258,6 +260,17 @@ impl<A1, A2> LockstepArray<A1, A2> where A1: Array, A2: Array {
     }
 }
 
+impl<A1, A2> Drop for LockstepArray<A1, A2> where A1: Array, A2: Array {
+    fn drop(&mut self) {
+        for i in 0..self.len.as_usize() as isize {
+            unsafe {
+                ptr::drop_in_place(self.array1.as_mut_ptr().offset(i));
+                ptr::drop_in_place(self.array2.as_mut_ptr().offset(i));
+            }
+        }
+    }
+}
+
 impl<A1, A2> Default for LockstepArray<A1, A2> where A1: Array, A2: Array {
     fn default() -> Self {
         Self::new()
@@ -267,8 +280,22 @@ impl<A1, A2> Default for LockstepArray<A1, A2> where A1: Array, A2: Array {
 impl<A1, A2> IntoIterator for LockstepArray<A1, A2> where A1: Array, A2: Array {
     type Item = (A1::Item, A2::Item);
     type IntoIter = IntoIter<A1, A2>;
-    fn into_iter(self) -> Self::IntoIter {
-        let LockstepArray { len, array1, array2 } = self;
+    fn into_iter(mut self) -> Self::IntoIter {
+        // LockstepArray implements Drop, so we can't move out of it
+        // We can, however, copy its arrays and zero its length, in which case drop() does nothing
+        let mut array1: NoDrop<A1> = NoDrop::new(unsafe { mem::uninitialized() });
+        let mut array2: NoDrop<A2> = NoDrop::new(unsafe { mem::uninitialized() });
+        unsafe {
+            ptr::copy_nonoverlapping(self.array1.as_ptr(),
+                                     array1.as_mut_ptr(),
+                                     A1::capacity());
+            ptr::copy_nonoverlapping(self.array2.as_ptr(),
+                                     array2.as_mut_ptr(),
+                                     A2::capacity());
+        }
+        let mut len = A1::Index::from_usize(0);
+        mem::swap(&mut len, &mut self.len);
+
         IntoIter {
             len: len.as_usize(),
             array1: array1,
@@ -298,6 +325,18 @@ impl<A1: Array, A2: Array> Iterator for IntoIter<A1, A2> {
                 let item2 = ptr::read(ptr2);
                 self.pos += 1;
                 Some((item1, item2))
+            }
+        }
+    }
+}
+
+impl<A1: Array, A2: Array> Drop for IntoIter<A1, A2> {
+    fn drop(&mut self) {
+        // drop any remaining items
+        for i in self.pos..self.len {
+            unsafe {
+                ptr::drop_in_place(self.array1.as_mut_ptr().offset(i as isize));
+                ptr::drop_in_place(self.array2.as_mut_ptr().offset(i as isize));
             }
         }
     }
@@ -340,6 +379,116 @@ fn test_length() {
     locksteparray.pop();
     assert_eq!(locksteparray.len(), 0);
     assert!(locksteparray.is_empty());
+}
+
+#[test]
+fn test_drop() {
+    use std::sync::atomic::{AtomicUsize,Ordering};
+    use util::test::Droppable;
+
+    let drop_count = AtomicUsize::new(0);
+
+    {
+        let mut locksteparray = LockstepArray::<[u8; 7], [Droppable; 7]>::new();
+        assert_eq!(drop_count.load(Ordering::Acquire), 0);
+
+        // inserting should cause no drops
+        locksteparray.insert(0, 255, Droppable(&drop_count)).unwrap();
+        assert_eq!(locksteparray.len(), 1);
+        assert_eq!(drop_count.load(Ordering::Acquire), 0);
+
+        // inserting to a new index should not cause drops
+        locksteparray.insert(1, 255, Droppable(&drop_count)).unwrap();
+        assert_eq!(locksteparray.len(), 2);
+        assert_eq!(drop_count.load(Ordering::Acquire), 0);
+
+        // inserting to a used index should not cause a drop, since the array expands
+        locksteparray.insert(0, 255, Droppable(&drop_count)).unwrap();
+        assert_eq!(locksteparray.len(), 3);
+        assert_eq!(drop_count.load(Ordering::Acquire), 0);
+    }
+
+    // dropping should cause all items to drop
+    assert_eq!(drop_count.load(Ordering::Acquire), 3);
+
+    // reset the counter
+    drop_count.store(0, Ordering::Release);
+
+    {
+        let overflow_drop_count = AtomicUsize::new(0);
+        let mut locksteparray = LockstepArray::<[u8; 7], [Droppable; 7]>::new();
+        assert_eq!(drop_count.load(Ordering::Acquire), 0);
+
+        // insert seven things at location 0
+        for i in 0..7 {
+            locksteparray.insert(0, 255, Droppable(&drop_count)).unwrap();
+            assert_eq!(locksteparray.len(), i+1);
+            assert_eq!(drop_count.load(Ordering::Acquire), 0);
+        }
+
+        // inserting again should fail with an overflow
+        match locksteparray.insert(0, 255, Droppable(&overflow_drop_count)) {
+            Err(InsertError::Overflow(_i, _droppable)) => {
+                // ...but no drops should yet occur
+                assert_eq!(overflow_drop_count.load(Ordering::Acquire), 0);
+                assert_eq!(drop_count.load(Ordering::Acquire), 0);
+            }
+            _ => {
+                panic!("expected overflow")
+            }
+        }
+
+        // overflowed element should now be dropped, since we dropped it when it went of scope
+        assert_eq!(overflow_drop_count.load(Ordering::Acquire), 1);
+
+        // array should still have seven with no interior elements being dropped
+        assert_eq!(locksteparray.len(), 7);
+        assert_eq!(drop_count.load(Ordering::Acquire), 0);
+
+        // pop one, let it drop
+        locksteparray.pop().unwrap();
+        assert_eq!(drop_count.load(Ordering::Acquire), 1);
+
+        // remove another, let it drop
+        locksteparray.remove(4).unwrap();
+        assert_eq!(drop_count.load(Ordering::Acquire), 2);
+
+        // drop the array
+    }
+
+    // all seven items should now be dropped
+    assert_eq!(drop_count.load(Ordering::Acquire), 7);
+
+    // reset the counter
+    drop_count.store(0, Ordering::Release);
+}
+
+#[test]
+fn test_into_iter_drop() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use util::test::Droppable;
+
+    let drop_count = AtomicUsize::new(0);
+
+    {
+        // make an array with four items
+        let mut locksteparray = LockstepArray::<[u8; 7], [Droppable; 7]>::new();
+        for i in 0..4 {
+            locksteparray.insert(0, 255, Droppable(&drop_count)).unwrap();
+        }
+        assert_eq!(drop_count.load(Ordering::Acquire), 0);
+
+        // convert to an iterator
+        let mut into_iter = locksteparray.into_iter();
+        assert_eq!(drop_count.load(Ordering::Acquire), 0);
+
+        // grab an item, let it drop
+        into_iter.next().unwrap();
+        assert_eq!(drop_count.load(Ordering::Acquire), 1);
+    }
+
+    // ensure the unused items drop with the iter
+    assert_eq!(drop_count.load(Ordering::Acquire), 4);
 }
 
 // TODO: Remove when this is detected at compile time.

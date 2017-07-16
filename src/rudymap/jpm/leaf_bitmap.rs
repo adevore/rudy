@@ -29,6 +29,20 @@ impl<K: Key, V> LeafBitmap<K, V> {
     }
 }
 
+impl<K: Key, V> Drop for LeafBitmap<K, V> {
+    fn drop(&mut self) {
+        for index in 0..256 {
+            let occupied = self.keys[index / 8] & (1 << (index % 8));
+            if occupied != 0 {
+                let mut value = &mut self.values[index];
+                unsafe {
+                    ptr::drop_in_place(value as *mut V);
+                }
+            }
+        }
+    }
+}
+
 #[derive(Debug)]
 enum Place {
     Occupied(usize),
@@ -98,5 +112,59 @@ impl<K: Key, V> JpmNode<K, V> for LeafBitmap<K, V> {
 
     fn shrink_remove(self, pop: usize, key: &[u8]) -> (InnerPtr<K, V>, V) {
         unreachable!()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use std::sync::atomic::{AtomicUsize,Ordering};
+    use util::test::Droppable;
+
+    #[test]
+    fn test_drop() {
+        let drop_count = AtomicUsize::new(0);
+
+        {
+            // insert a single key
+            let mut lb: LeafBitmap<u32, Droppable> = LeafBitmap::new();
+            lb.insert(&[0], Droppable(&drop_count)).success();
+
+            // inserting into an empty map should cause no drops
+            assert_eq!(drop_count.load(Ordering::Acquire), 0);
+
+            // overwriting the key should drop the old key
+            lb.insert(&[0], Droppable(&drop_count)).success();
+            assert_eq!(drop_count.load(Ordering::Acquire), 1);
+        }
+
+        // dropping the LeafBitmap should drop its only value
+        assert_eq!(drop_count.load(Ordering::Acquire), 2);
+
+        // reset the counter
+        drop_count.store(0, Ordering::Release);
+
+        {
+            let mut lb: LeafBitmap<u32, Droppable> = LeafBitmap::new();
+            for i in 0..256 {
+                lb.insert(&[i as u8], Droppable(&drop_count)).success();
+            }
+
+            // inserting a full bitmap should cause no drops
+            assert_eq!(drop_count.load(Ordering::Acquire), 0);
+
+            // getting/get_muting should cause no drops
+            lb.get(&[1]);
+            lb.get_mut(&[2]);
+            assert_eq!(drop_count.load(Ordering::Acquire), 0);
+
+            // removing one key should cause one drop
+            lb.remove(&[42]).success();
+            assert_eq!(drop_count.load(Ordering::Acquire), 1);
+        }
+
+        // discarding the LeafBitmap should drop the others
+        assert_eq!(drop_count.load(Ordering::Acquire), 256);
     }
 }
