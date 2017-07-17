@@ -70,19 +70,84 @@ impl<K: Key, V> Default for RudyMap<K, V> {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
 
-#[test]
-fn test_insert_get_1() {
-    let mut map = RudyMap::<usize, usize>::new();
-    map.insert(4usize, 10usize);
-    assert_eq!(map.get(4), Some(&10));
-}
+    #[test]
+    fn test_insert_get_1() {
+        let mut map = RudyMap::<usize, usize>::new();
+        map.insert(4usize, 10usize);
+        assert_eq!(map.get(4), Some(&10));
+    }
 
-#[test]
-fn test_insert_get_2() {
-    let mut map = RudyMap::<usize, usize>::new();
-    map.insert(0usize, 10usize);
-    map.insert(1usize, 20usize);
-    assert_eq!(map.get(0), Some(&10));
-    assert_eq!(map.get(1), Some(&20));
+    #[test]
+    fn test_insert_get_2() {
+        let mut map = RudyMap::<usize, usize>::new();
+        map.insert(0usize, 10usize);
+        map.insert(1usize, 20usize);
+        assert_eq!(map.get(0), Some(&10));
+        assert_eq!(map.get(1), Some(&20));
+    }
+
+    #[test]
+    fn test_contains_key() {
+        let mut map = RudyMap::<u32, u32>::new();
+        assert_eq!(map.contains_key(0), false);
+        assert_eq!(map.contains_key(1), false);
+
+        assert_eq!(map.insert(0, 0), None);
+        assert_eq!(map.contains_key(0), true);
+        assert_eq!(map.contains_key(1), false);
+
+        assert_eq!(map.remove(0), Some(0));
+        assert_eq!(map.contains_key(0), false);
+        assert_eq!(map.contains_key(1), false);
+    }
+
+    #[test]
+    fn test_len() {
+        let mut map = RudyMap::<u32, u32>::new();
+        assert_eq!(map.len(), 0);
+        assert_eq!(map.is_empty(), true);
+
+        assert_eq!(map.insert(0, 0), None);
+        assert_eq!(map.len(), 1);
+        assert_eq!(map.is_empty(), false);
+
+        assert_eq!(map.insert(1, 1), None);
+        assert_eq!(map.len(), 2);
+        assert_eq!(map.is_empty(), false);
+
+        assert_eq!(map.insert(0, 2), Some(0));
+        assert_eq!(map.len(), 2);
+        assert_eq!(map.is_empty(), false);
+
+        assert_eq!(map.remove(0), Some(2));
+        assert_eq!(map.len(), 1);
+        assert_eq!(map.is_empty(), false);
+
+        assert_eq!(map.remove(1), Some(1));
+        assert_eq!(map.len(), 0);
+        assert_eq!(map.is_empty(), true);
+    }
+
+    #[test]
+    fn test_get_mut() {
+        let mut map = RudyMap::<u32, u32>::new();
+        assert!(map.get(0).is_none());
+        assert!(map.get_mut(0).is_none());
+
+        assert_eq!(map.insert(0, 0), None);
+        assert_eq!(map.get(0), Some(&0));
+        assert_eq!(map.get_mut(0), Some(&mut 0));
+        assert_eq!(map.get(1), None);
+        assert_eq!(map.get_mut(1), None);
+
+        *map.get_mut(0).unwrap() += 42;
+        assert_eq!(map.get(0), Some(&42));
+        assert_eq!(map.get_mut(0), Some(&mut 42));
+
+        map.remove(0);
+    }
 }
