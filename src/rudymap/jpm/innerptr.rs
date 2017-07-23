@@ -159,11 +159,18 @@ macro_rules! make_inner_ptr {
                 ::std::mem::replace(self, InnerPtr::default())
             }
 
-            pub fn memory_usage(&self) -> usize {
+            // In general, an `InnerPtr` or array of `InnerPtr`s will be included in some other data
+            // structure which already counts its own size in a `memory_usage()` function. Thus, it
+            // is not useful for `InnerPtr` to report its own memory consumption.
+            //
+            // However, it _is_ useful to ask an `InnerPtr` about the memory consumption of its
+            // target without including the `InnerPtr` itself. This is what `target_memory_usage()`
+            // does.
+            pub fn target_memory_usage(&self) -> usize {
                 match *self {
                     $(
-                        InnerPtr::$type(ref target, ref pop) => {
-                            target.memory_usage() + mem::size_of_val(pop)
+                        InnerPtr::$type(ref target, ref _pop) => {
+                            target.memory_usage()
                         },
                     )*
                 }

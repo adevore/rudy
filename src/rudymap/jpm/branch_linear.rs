@@ -90,7 +90,7 @@ impl<K: Key, V> JpmNode<K, V> for BranchLinear<K, V> {
     fn memory_usage(&self) -> usize {
         let mut bytes = mem::size_of::<Self>();
         for jpm in self.array.array2().iter() {
-            bytes += jpm.memory_usage();
+            bytes += jpm.target_memory_usage();
         }
         bytes
     }

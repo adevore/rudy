@@ -55,7 +55,7 @@ impl<K: Key, V> RootLeaf<K, V> for Jpm<K, V> {
         self.len
     }
     fn memory_usage(&self) -> usize {
-        mem::size_of::<Self>() + self.head.memory_usage()
+        mem::size_of::<Self>() + self.head.target_memory_usage()
     }
 }
 

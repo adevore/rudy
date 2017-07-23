@@ -79,7 +79,7 @@ impl<K: Key, V> Subexpanse<K, V> {
         if let Some(ref inner_ptrs) = self.ptr {
             for i in 0..32 as usize {
                 if (self.bitmap & (1 << i)) as u32 != 0 {
-                    bytes += inner_ptrs[i].memory_usage();
+                    bytes += inner_ptrs[i].target_memory_usage();
                 }
             }
         }

@@ -58,7 +58,7 @@ impl<K: Key, V> JpmNode<K, V> for BranchUncompressed<K, V> {
     fn memory_usage(&self) -> usize {
         let mut bytes = mem::size_of::<Self>();
         for jpm in self.array.iter() {
-            bytes += jpm.memory_usage();
+            bytes += jpm.target_memory_usage();
         }
         bytes
     }
