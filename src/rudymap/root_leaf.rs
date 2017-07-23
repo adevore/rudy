@@ -17,6 +17,10 @@ pub trait RootLeaf<K: Key, V> {
     fn remove(&mut self, key: K) -> RemoveResult<V>;
     fn shrink_remove(self, key: K) -> (RootPtr<K, V>, V);
     fn len(&self) -> usize;
+
+    fn memory_usage(&self) -> usize {
+        mem::size_of_val(self)
+    }
 }
 
 pub struct Empty<K: Key, V>(PhantomData<(K, V)>);

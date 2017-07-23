@@ -57,4 +57,8 @@ impl<K: Key, V> JpmNode<K, V> for Empty<K, V> {
     fn shrink_remove(self, pop: usize, key: &[u8]) -> (InnerPtr<K, V>, V) {
         unreachable!();
     }
+
+    fn memory_usage(&self) -> usize {
+        0
+    }
 }

@@ -36,7 +36,7 @@ types and the usage of larger types, with possible impact to performance.
 - [x] Insertion
 - [x] Get
 - [x] Remove
-- [ ] Memory used
+- [x] Memory used
 - [ ] Shrink
 - [ ] Iterators
 

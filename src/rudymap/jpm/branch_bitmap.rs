@@ -4,6 +4,7 @@ use super::traits::JpmNode;
 use ::rudymap::results::{InsertResult, RemoveResult};
 use super::branch_uncompressed::BranchUncompressed;
 use std::iter::FromIterator;
+use std::mem;
 
 struct Subexpanse<K: Key, V> {
     pub bitmap: u32,
@@ -72,6 +73,18 @@ impl<K: Key, V> Subexpanse<K, V> {
             .remove(subkey);
         RemoveResult::Success(evicted)
     }
+
+    pub fn memory_usage(&self) -> usize {
+        let mut bytes = mem::size_of::<Self>();
+        if let Some(ref inner_ptrs) = self.ptr {
+            for i in 0..32 as usize {
+                if (self.bitmap & (1 << i)) as u32 != 0 {
+                    bytes += inner_ptrs[i].target_memory_usage();
+                }
+            }
+        }
+        bytes
+    }
 }
 
 pub struct BranchBitmap<K: Key, V> {
@@ -109,6 +122,14 @@ impl<K: Key, V> JpmNode<K, V> for BranchBitmap<K, V> {
 
     fn shrink_remove(self, pop: usize, key: &[u8]) -> (InnerPtr<K, V>, V) {
         unreachable!()
+    }
+
+    fn memory_usage(&self) -> usize {
+        let mut bytes = mem::size_of::<Self>();
+        for i in 0..32 as usize {
+            bytes += self.subexpanses[i].memory_usage();
+        }
+        bytes
     }
 }
 
