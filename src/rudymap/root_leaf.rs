@@ -17,6 +17,10 @@ pub trait RootLeaf<K: Key, V> {
     fn remove(&mut self, key: K) -> RemoveResult<V>;
     fn shrink_remove(self, key: K) -> (RootPtr<K, V>, V);
     fn len(&self) -> usize;
+
+    fn memory_usage(&self) -> usize {
+        mem::size_of_val(self)
+    }
 }
 
 pub struct Empty<K: Key, V>(PhantomData<(K, V)>);
@@ -201,7 +205,9 @@ impl<K: Key, V> RootLeaf<K, V> for Leaf2<K, V> {
     }
 
     fn shrink_remove(self, key: K) -> (RootPtr<K, V>, V) {
-        let Leaf2 { keys: [key1, key2], mut values } = self;
+        let Leaf2 { keys, mut values } = self;
+        let key1 = keys[0];
+        let key2 = keys[1];
         let (value1, value2);
         unsafe {
             value1 = ptr::read(&mut values[0]);

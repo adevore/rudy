@@ -1,6 +1,6 @@
 [package]
 name = "rudy"
-version = "0.0.1"
+version = "0.1.1-pre"
 authors = ["Aaron DeVore <aaron.devore@gmail.com>"]
 license = "MIT/Apache-2.0"
 description = "Judy array implementation in pure Rust"

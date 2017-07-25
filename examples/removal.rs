@@ -1,4 +1,3 @@
-#![feature(inclusive_range_syntax)]
 extern crate rudy;
 use rudy::rudymap::RudyMap;
 
@@ -19,7 +18,7 @@ fn main() {
     for i in low..high {
         assert_eq!(map.get(i), None);
     }
-    for i in 5...7 {
+    for i in 5..7 {
         println!("{} => {:?}", i, map.get(i));
     }
     println!("{}", map.len());
