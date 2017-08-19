@@ -6,32 +6,115 @@ pub struct RudySet<K: Key> {
 }
 
 impl<K: Key> RudySet<K> {
+    /// Return an empty RudySet. There are no initial allocations.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ::rudy::RudySet;
+    ///
+    /// let mut set = RudySet::<u32>::new();
+    /// ```
     pub fn new() -> RudySet<K> {
         RudySet {
             map: RudyMap::new()
         }
     }
 
+    /// Insert a value. Returns whether the set currently contains
+    /// the value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ::rudy::RudySet;
+    ///
+    /// let mut set = RudySet::<u32>::new();
+    /// assert_eq!(set.insert(4), false);
+    /// assert_eq!(set.insert(4), true);
+    /// ```
     pub fn insert(&mut self, value: K) -> bool {
         self.map.insert(value, ()).is_some()
     }
 
+    /// Remove a value. Returns whether the set currently contains
+    /// the value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ::rudy::RudySet;
+    ///
+    /// let mut set = RudySet::<u32>::new();
+    /// assert_eq!(set.remove(4), false);
+    /// set.insert(4);
+    /// assert_eq!(set.remove(4), true);
+    /// assert_eq!(set.remove(4), false);
+    /// ```
     pub fn remove(&mut self, value: K) -> bool {
         self.map.remove(value).is_some()
     }
 
+    /// Return `true` if the set contains a value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ::rudy::RudySet;
+    ///
+    /// let mut set = RudySet::<u32>::new();
+    /// assert_eq!(set.contains(4), false);
+    /// set.insert(4);
+    /// assert_eq!(set.contains(4), true);
+    /// ```
     pub fn contains(&self, value: K) -> bool {
         self.map.contains_key(value)
     }
 
+    /// Clear the set.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ::rudy::RudySet;
+    ///
+    /// let mut set = RudySet::<u32>::new();
+    /// set.insert(4);
+    /// assert_eq!(set.contains(4), true);
+    /// set.clear();
+    /// assert_eq!(set.contains(4), false);
+    /// ```
     pub fn clear(&mut self) {
         self.map = RudyMap::new();
     }
 
+    /// Returns `true` if the set is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ::rudy::RudySet;
+    ///
+    /// let mut set = RudySet::<u32>::new();
+    /// assert_eq!(set.is_empty(), true);
+    /// set.insert(4);
+    /// assert_eq!(set.is_empty(), false);
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.map.is_empty()
     }
 
+    /// Returns the number of elements in the set.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ::rudy::RudySet;
+    ///
+    /// let mut set = RudySet::<u32>::new();
+    /// set.insert(4);
+    /// assert_eq!(set.len(), 1);
+    /// ```
     pub fn len(&self) -> usize {
         self.map.len()
     }
