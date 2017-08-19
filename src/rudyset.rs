@@ -11,6 +11,7 @@ impl<K: Key> RudySet<K> {
             map: RudyMap::new()
         }
     }
+
     pub fn insert(&mut self, value: K) -> bool {
         self.map.insert(value, ()).is_some()
     }
@@ -86,6 +87,33 @@ impl<K: Key + Eq> Eq for RudySet<K> {}
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn test_insert_empty() {
+        let mut set = RudySet::<usize>::new();
+        assert_eq!(set.insert(4usize), false);
+    }
+
+    #[test]
+    fn test_insert_exists() {
+        let mut set = RudySet::<usize>::new();
+        set.insert(4usize);
+        assert_eq!(set.insert(4usize), true);
+    }
+
+    #[test]
+    fn test_remove_empty() {
+        let mut set = RudySet::<usize>::new();
+        assert_eq!(set.remove(4usize), false);
+    }
+
+    #[test]
+    fn test_remove_exists() {
+        let mut set = RudySet::<usize>::new();
+        set.insert(4usize);
+        assert_eq!(set.remove(4usize), true);
+    }
+
     #[test]
     fn test_insert_contains_1() {
         let mut set = RudySet::<usize>::new();
