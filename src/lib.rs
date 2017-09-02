@@ -7,12 +7,11 @@ extern crate num_traits;
 extern crate smallvec;
 
 mod util;
-pub mod rudymap;
 mod key;
 
+pub mod rudymap;
+pub mod rudyset;
+
 pub use key::Key;
-//mod rudyset;
-
-//pub use rudyset::RudySet;
-//pub use rudymap::RudyMap;
-
+pub use rudyset::RudySet;
+pub use rudymap::RudyMap;
