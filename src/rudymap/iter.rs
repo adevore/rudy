@@ -19,7 +19,7 @@ macro_rules! iter_state {
         )*
 
         pub struct Iter<'a, K: Key, V> {
-            stack: SmallVec<[IterState<'a, K, V>; 8]>
+            stack: ArrayVec<[IterState<'a, K, V>; K::SIZE]>
         }
 
         impl<'a, K: Key, V> Iter<'a, K, V> {

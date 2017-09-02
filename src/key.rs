@@ -2,6 +2,7 @@ use std::fmt::Debug;
 
 pub trait Key: Copy + PartialEq + Ord + Default + Debug {
     type Bytes: AsRef<[u8]>;
+    const SIZE: usize;
     fn into_bytes(self) -> Self::Bytes;
     fn from_bytes(bytes: Self::Bytes) -> Self;
 }
@@ -11,6 +12,7 @@ macro_rules! impl_key {
     ($type:ident, $size:expr) => {
         impl Key for $type {
             type Bytes = [u8; $size];
+            const SIZE: usize = $size;
             fn into_bytes(self) -> Self::Bytes {
                 unsafe {
                     ::std::mem::transmute(self.to_be())
