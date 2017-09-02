@@ -10,4 +10,5 @@ pub trait JpmNode<K: Key, V> {
     fn expand(self, population: usize, key: &[u8], value: V) -> InnerPtr<K, V>;
     fn remove(&mut self, key: &[u8]) -> RemoveResult<V>;
     fn shrink_remove(self, pop: usize, key: &[u8]) -> (InnerPtr<K, V>, V);
+    fn memory_usage(&self) -> usize;
 }

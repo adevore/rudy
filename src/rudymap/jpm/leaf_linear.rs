@@ -49,4 +49,6 @@ impl<K: Key, V> JpmNode<K, V> for LeafLinear<K, V> {
     fn shrink_remove(self, pop: usize, key: &[u8]) -> (InnerPtr<K, V>, V) {
         unreachable!()
     }
+
+    fn memory_usage(&self) -> usize {  unimplemented!()  }
 }

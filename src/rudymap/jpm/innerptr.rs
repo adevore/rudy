@@ -8,6 +8,7 @@ use super::traits::JpmNode;
 use ::rudymap::results::{InsertResult, RemoveResult};
 use ::util::{partial_write, partial_read};
 use ::Key;
+use std::mem;
 
 #[cfg(target_pointer_width = "32")]
 pub struct Population {
@@ -156,6 +157,23 @@ macro_rules! make_inner_ptr {
 
             pub fn take(&mut self) -> InnerPtr<K, V> {
                 ::std::mem::replace(self, InnerPtr::default())
+            }
+
+            // In general, an `InnerPtr` or array of `InnerPtr`s will be included in some other data
+            // structure which already counts its own size in a `memory_usage()` function. Thus, it
+            // is not useful for `InnerPtr` to report its own memory consumption.
+            //
+            // However, it _is_ useful to ask an `InnerPtr` about the memory consumption of its
+            // target without including the `InnerPtr` itself. This is what `target_memory_usage()`
+            // does.
+            pub fn target_memory_usage(&self) -> usize {
+                match *self {
+                    $(
+                        InnerPtr::$type(ref target, ref _pop) => {
+                            target.memory_usage()
+                        },
+                    )*
+                }
             }
         }
 
